@@ -8,8 +8,17 @@ import "./index.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <Toaster
-      position="top-right"
-      reverseOrder={false}
+      position="top-center"
+      toastOptions={{
+        duration: 2500,
+        style: {
+          background: "#fff",
+          color: "#111827",
+          borderRadius: "12px",
+          padding: "16px",
+          fontSize: "16px",
+        },
+      }}
     />
     <App />
   </BrowserRouter>
