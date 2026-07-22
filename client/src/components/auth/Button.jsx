@@ -36,7 +36,7 @@ function Button({
         />
       )}
 
-      {loading ? "Creating Account..." : text}
+      {loading ? "Please wait..." : text}
     </button>
   );
 }
