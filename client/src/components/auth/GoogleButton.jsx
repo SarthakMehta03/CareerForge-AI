@@ -6,28 +6,27 @@ function GoogleButton() {
       type="button"
       className="
         w-full
+        h-9
         flex
         items-center
         justify-center
-        gap-3
-        py-3.5
-        rounded-xl
+        gap-2
+        rounded-md
         border
         border-gray-200
         bg-white
         font-medium
+        text-xs
         text-gray-700
         shadow-sm
         transition-all
-        duration-300
-        hover:shadow-lg
+        duration-200
+        hover:shadow-md
         hover:border-gray-400
-        hover:-translate-y-0.5
-        active:translate-y-0
         active:scale-95
-        "
+      "
     >
-      <FcGoogle size={22} />
+      <FcGoogle size={17} />
 
       <span>Continue with Google</span>
     </button>

@@ -82,7 +82,7 @@ function SignupCard() {
 
       setTimeout(() => {
         navigate("/login");
-      }, 2000);
+      }, 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed.");
     } finally {
@@ -91,28 +91,41 @@ function SignupCard() {
   };
 
   return (
-    <div className="flex justify-center px-4 pb-16">
+    <div className="flex justify-center px-4 pb-3">
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8"
+        transition={{ duration: 0.35 }}
+        className="
+          w-full
+          max-w-sm
+          bg-white
+          rounded-xl
+          shadow-md
+          border
+          border-gray-200
+          px-6
+          py-4
+        "
       >
-        <h2 className="text-3xl font-bold text-center text-gray-900">
+        {/* Heading */}
+        <h2 className="text-xl font-bold text-center text-gray-900">
           Create Your Account
         </h2>
 
-        <p className="mt-2 text-center text-gray-500">
+        <p className="mt-0.5 text-center text-xs text-gray-500">
           Start your journey to interview success
         </p>
 
-        <form className="mt-8" onSubmit={handleSubmit}>
+        <form className="mt-4" onSubmit={handleSubmit}>
+          {/* Error */}
           {error && (
-            <div className="mb-4 rounded-lg bg-red-100 border border-red-300 p-3 text-red-700">
+            <div className="mb-2 rounded-md bg-red-50 border border-red-200 px-2 py-1 text-xs text-red-600">
               {error}
             </div>
           )}
 
+          {/* Full Name */}
           <InputField
             name="fullName"
             label="Full Name"
@@ -122,6 +135,7 @@ function SignupCard() {
             onChange={handleChange}
           />
 
+          {/* Email */}
           <InputField
             name="email"
             label="Email"
@@ -133,6 +147,7 @@ function SignupCard() {
 
           <EmailValidation email={formData.email} />
 
+          {/* Password */}
           <InputField
             name="password"
             label="Password"
@@ -144,6 +159,7 @@ function SignupCard() {
 
           <PasswordStrength password={formData.password} />
 
+          {/* Confirm Password */}
           <InputField
             name="confirmPassword"
             label="Confirm Password"
@@ -158,35 +174,40 @@ function SignupCard() {
             confirmPassword={formData.confirmPassword}
           />
 
-          <div className="flex items-center gap-3 my-5">
+          {/* Terms */}
+          <div className="flex items-center gap-2 mt-1 mb-2">
             <input
               type="checkbox"
               name="agree"
               checked={formData.agree}
               onChange={handleChange}
-              className="w-4 h-4"
+              className="w-3.5 h-3.5 accent-black"
             />
 
-            <label className="text-sm text-gray-600">
+            <label className="text-[11px] text-gray-600">
               I agree to the Terms of Service
             </label>
           </div>
 
+          {/* Create Account */}
           <Button
             text="Create Account"
             type="submit"
             loading={loading}
           />
 
+          {/* Divider */}
           <Divider />
 
+          {/* Google */}
           <GoogleButton />
 
-          <p className="text-center text-sm text-gray-600 mt-6">
+          {/* Login */}
+          <p className="text-center text-[11px] text-gray-500 mt-2">
             Already have an account?{" "}
             <span
               onClick={() => navigate("/login")}
-              className="font-semibold text-black cursor-pointer hover:underline"
+              className="font-semibold text-gray-900 cursor-pointer hover:underline"
             >
               Log In
             </span>
