@@ -12,10 +12,11 @@ function Button({
       disabled={loading || disabled}
       className="
         w-full
+        h-9
         bg-black
         text-white
-        py-3
-        rounded-xl
+        text-xs
+        rounded-md
         font-semibold
         flex
         items-center
@@ -31,7 +32,7 @@ function Button({
     >
       {loading && (
         <Loader2
-          size={18}
+          size={15}
           className="animate-spin"
         />
       )}

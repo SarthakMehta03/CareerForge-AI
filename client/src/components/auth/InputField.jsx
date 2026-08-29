@@ -19,8 +19,8 @@ function InputField({
       : type;
 
   return (
-    <div className="mb-5">
-      <label className="block mb-2 text-sm font-medium text-gray-700">
+    <div className="mb-2.5">
+      <label className="block mb-1 text-xs font-medium text-gray-700">
         {label}
       </label>
 
@@ -33,18 +33,22 @@ function InputField({
           onChange={onChange}
           className="
             w-full
-            rounded-xl
+            h-8
+            rounded-md
             border
-            border-gray-300
-            px-4
-            py-3
-            pr-12
+            border-gray-200
+            bg-gray-50
+            px-3
+            pr-9
+            text-xs
+            text-gray-700
+            placeholder:text-gray-400
             outline-none
-            transition-all
-            duration-200
-            focus:border-black
-            focus:ring-2
-            focus:ring-gray-300
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-1
+            focus:ring-gray-200
           "
         />
 
@@ -54,18 +58,17 @@ function InputField({
             onClick={() => setShowPassword(!showPassword)}
             className="
               absolute
-              right-4
+              right-2.5
               top-1/2
               -translate-y-1/2
-              text-gray-500
+              text-gray-400
               hover:text-black
-              transition-colors
             "
           >
             {showPassword ? (
-              <EyeOff size={20} />
+              <EyeOff size={16} />
             ) : (
-              <Eye size={20} />
+              <Eye size={16} />
             )}
           </button>
         )}
