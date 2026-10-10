@@ -16,19 +16,36 @@ const userSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, 'Password is required'],
+            required: function () {
+                return !this.googleId;
+            },
             minlength: [6, 'Password must be at least 6 characters long'],
+        },
+        googleId: {
+            type: String,
+            default: null,
+        },
+        avatar: {
+            type: String,
+            default: '',
         },
         role: {
             type: String,
-            enum: ['user', 'admin'], 
+            enum: ['user', 'admin'],
             default: 'user',
+        },
+        resetPasswordToken: {
+            type: String,
+            default: null,
+        },
+        resetPasswordExpire: {
+            type: Date,
+            default: null,
         }
-          
     },
     {
-        timestamps: true,  
+        timestamps: true,
     }
 );
 
-module.exports = mongoose.model('User', userSchema);        
+module.exports = mongoose.model('User', userSchema);

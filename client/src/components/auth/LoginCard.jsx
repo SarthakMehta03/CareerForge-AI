@@ -7,6 +7,7 @@ import InputField from "./InputField";
 import Button from "./Button";
 import Divider from "./Divider";
 import GoogleButton from "./GoogleButton";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 import { loginUser } from "../../services/authService";
 
@@ -19,8 +20,8 @@ function LoginCard() {
   });
 
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +81,7 @@ function LoginCard() {
 
         <form className="mt-8" onSubmit={handleSubmit}>
           {error && (
-            <div className="mb-4 rounded-lg bg-red-100 border border-red-300 p-3 text-red-700">
+            <div className="mb-4 rounded-lg bg-red-100 border border-red-300 p-3 text-red-700 text-sm">
               {error}
             </div>
           )}
@@ -106,7 +107,8 @@ function LoginCard() {
           <div className="flex justify-end mb-5">
             <button
               type="button"
-              className="text-sm text-gray-600 hover:text-black"
+              onClick={() => setIsForgotModalOpen(true)}
+              className="text-sm text-gray-600 hover:text-black hover:underline cursor-pointer"
             >
               Forgot Password?
             </button>
@@ -133,6 +135,11 @@ function LoginCard() {
           </p>
         </form>
       </motion.div>
+
+      <ForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+      />
     </div>
   );
 }
