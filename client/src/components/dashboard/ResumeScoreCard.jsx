@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { FileText, ArrowRight, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function ResumeScoreCard() {
+  const navigate = useNavigate();
   const resumeScore = 78;
 
   return (
@@ -9,7 +11,8 @@ function ResumeScoreCard() {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
+      className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm cursor-pointer hover:border-black transition"
+      onClick={() => navigate("/resumes")}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -120,9 +123,13 @@ function ResumeScoreCard() {
       {/* Action */}
       <button
         type="button"
-        className="mt-5 flex items-center gap-2 text-sm font-semibold text-gray-900 hover:gap-3 transition-all"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate("/resumes");
+        }}
+        className="mt-5 flex items-center gap-2 text-sm font-semibold text-gray-900 hover:gap-3 transition-all cursor-pointer"
       >
-        Analyze Resume
+        Manage Resumes
         <ArrowRight size={16} />
       </button>
     </motion.div>

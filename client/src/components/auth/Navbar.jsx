@@ -1,6 +1,7 @@
 import {
   Home,
   LayoutDashboard,
+  FileText,
   Briefcase,
   BookOpen,
   User,
@@ -20,6 +21,11 @@ function Navbar() {
       name: "Dashboard",
       path: "/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      name: "Resumes",
+      path: "/resumes",
+      icon: FileText,
     },
     {
       name: "Interviews",

@@ -5,6 +5,9 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
+import ResumeManagement from "./pages/ResumeManagement";
+import ResumeBuilder from "./pages/ResumeBuilder";
+import ResumePreviewPage from "./pages/ResumePreviewPage";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -28,6 +31,42 @@ function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resumes"
+        element={
+          <ProtectedRoute>
+            <ResumeManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resume/new"
+        element={
+          <ProtectedRoute>
+            <ResumeBuilder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resume/:id/edit"
+        element={
+          <ProtectedRoute>
+            <ResumeBuilder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resume/:id/preview"
+        element={
+          <ProtectedRoute>
+            <ResumePreviewPage />
           </ProtectedRoute>
         }
       />

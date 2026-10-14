@@ -6,3 +6,47 @@ input::-ms-clear {
   display: none;
 }
 
+/* Print styling for resume PDF export and browser print */
+@page {
+  size: A4 portrait;
+  margin: 0mm;
+}
+
+@media print {
+  html, body {
+    width: 210mm !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything except the resume container */
+  nav, header, footer, button, .no-print, [role="dialog"], .fixed {
+    display: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #resume-preview-content,
+  #resume-preview-content * {
+    visibility: visible;
+  }
+
+  #resume-preview-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 12mm 14mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+  }
+}
+
