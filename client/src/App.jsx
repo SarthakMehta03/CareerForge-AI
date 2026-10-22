@@ -7,7 +7,9 @@ import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
 import ResumeManagement from "./pages/ResumeManagement";
 import ResumeBuilder from "./pages/ResumeBuilder";
+import TemplateSelectionPage from "./pages/TemplateSelectionPage";
 import ResumePreviewPage from "./pages/ResumePreviewPage";
+import PublicResumeView from "./pages/PublicResumeView";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -24,6 +26,8 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/view/:id" element={<PublicResumeView />} />
+      <Route path="/share/:id" element={<PublicResumeView />} />
 
       {/* Protected Routes */}
       <Route
@@ -48,7 +52,7 @@ function App() {
         path="/resume/new"
         element={
           <ProtectedRoute>
-            <ResumeBuilder />
+            <TemplateSelectionPage />
           </ProtectedRoute>
         }
       />

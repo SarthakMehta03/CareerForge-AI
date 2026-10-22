@@ -71,7 +71,7 @@ export function ResumeSidebar({ onOpenAddContent, onOpenATSModal, onOpenJobMatch
                   isSelected
                     ? "bg-black text-white font-bold shadow-xs"
                     : isHidden
-                    ? "bg-gray-50 text-gray-400 line-through"
+                    ? "bg-gray-50 text-gray-600"
                     : "text-gray-700 hover:bg-gray-100 hover:text-black"
                 }`}
               >

@@ -16,7 +16,6 @@ const resumeSchema = new mongoose.Schema(
     },
     template: {
       type: String,
-      enum: ["modern", "classic", "minimal", "professional"],
       default: "modern",
     },
     personalInfo: {
@@ -135,9 +134,46 @@ const resumeSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    theme: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    photoSettings: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+    downloadsCount: {
+      type: Number,
+      default: 0,
+    },
+    lastViewedAt: {
+      type: Date,
+      default: null,
+    },
+    pageCountLock: {
+      type: Number,
+      default: null, // null (auto/fluid), 1, or 2
+    },
+    versions: [
+      {
+        id: { type: String, required: true },
+        name: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+        resumeData: { type: mongoose.Schema.Types.Mixed, required: true },
+      },
+    ],
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
 

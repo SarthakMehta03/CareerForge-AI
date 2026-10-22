@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
+  Upload,
   FileText,
+  FileCode,
   Edit3,
   Eye,
   Copy,
@@ -15,6 +17,7 @@ import {
   ChevronDown,
   Sparkles,
   Clock,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Navbar from "../components/auth/Navbar";
@@ -24,6 +27,10 @@ import {
   deleteResume,
   duplicateResume,
 } from "../services/resumeService";
+import ImportResumeModal from "../components/resume/modals/ImportResumeModal";
+import ExportResumeModal from "../components/resume/modals/ExportResumeModal";
+import ShareResumeModal from "../components/resume/modals/ShareResumeModal";
+import { exportResumeBackup } from "../utils/resumeParser";
 
 // ──────────────────────────────────────────────
 // Mini resume thumbnails (one per template)
@@ -177,14 +184,128 @@ function MiniProfessionalPreview({ resume }) {
   );
 }
 
+function MiniAtlanticPreview({ resume, bg = "#1E293B" }) {
+  const { personalInfo } = resume;
+  return (
+    <div className="w-full h-full bg-white flex overflow-hidden">
+      <div className="w-[32%] p-1 text-white text-[3px] leading-[1.3] flex flex-col justify-between" style={{ backgroundColor: bg }}>
+        <div>
+          <div className="w-3.5 h-3.5 rounded-full bg-white/20 mx-auto mb-0.5 flex items-center justify-center text-[3px] font-bold">
+            {(personalInfo?.fullName || "A")[0]}
+          </div>
+          <div className="text-[3.5px] font-bold text-center truncate">{personalInfo?.fullName || "Name"}</div>
+          <div className="text-[2.2px] text-white/70 text-center truncate">{personalInfo?.jobTitle || "Title"}</div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="h-[1px] bg-white/30 rounded w-full" />
+          <div className="h-[1px] bg-white/30 rounded w-3/4" />
+        </div>
+      </div>
+      <div className="flex-1 p-1.5 text-[3px] leading-[1.3] space-y-1">
+        <div className="border-b border-gray-200 pb-0.5 font-bold text-[3px] text-gray-800">EXPERIENCE</div>
+        <div className="space-y-0.5">
+          <div className="h-[1px] bg-gray-200 rounded w-full" />
+          <div className="h-[1px] bg-gray-200 rounded w-4/5" />
+          <div className="h-[1px] bg-gray-200 rounded w-3/5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniCobaltPreview({ resume }) {
+  const { personalInfo } = resume;
+  return (
+    <div className="w-full h-full bg-white flex flex-col overflow-hidden text-[3px]">
+      <div className="bg-[#0B3B60] text-white p-1 flex justify-between items-center">
+        <div>
+          <div className="text-[3.5px] font-bold">{personalInfo?.fullName || "Name"}</div>
+          <div className="text-[2.2px] text-white/70">{personalInfo?.jobTitle || "Title"}</div>
+        </div>
+        <div className="w-3 h-3 rounded-full bg-white/20 flex items-center justify-center text-[2.5px] font-bold">
+          {(personalInfo?.fullName || "A")[0]}
+        </div>
+      </div>
+      <div className="p-1.5 flex-1 space-y-1">
+        <div className="h-[1px] bg-gray-200 rounded w-full" />
+        <div className="h-[1px] bg-gray-200 rounded w-5/6" />
+        <div className="h-[1px] bg-gray-200 rounded w-2/3" />
+      </div>
+    </div>
+  );
+}
+
+function MiniMercuryPreview({ resume }) {
+  const { personalInfo } = resume;
+  return (
+    <div className="w-full h-full bg-white p-1.5 text-[3px] leading-[1.3] overflow-hidden space-y-1">
+      <div className="border-b border-gray-200 pb-0.5">
+        <div className="text-[4px] font-bold text-gray-900">{personalInfo?.fullName || "Name"}</div>
+        <div className="text-[2.5px] text-gray-500">{personalInfo?.jobTitle || "Title"}</div>
+      </div>
+      <div className="bg-gray-100 text-gray-800 px-1 py-[0.5px] rounded text-[2.5px] font-bold">
+        EXPERIENCE
+      </div>
+      <div className="space-y-0.5">
+        <div className="h-[1px] bg-gray-200 rounded w-full" />
+        <div className="h-[1px] bg-gray-200 rounded w-4/5" />
+      </div>
+    </div>
+  );
+}
+
+function MiniSaffronPreview({ resume }) {
+  const { personalInfo } = resume;
+  return (
+    <div className="w-full h-full bg-white p-1.5 text-[3px] leading-[1.3] overflow-hidden space-y-1">
+      <div className="border-b border-amber-600 pb-0.5">
+        <div className="text-[4px] font-serif font-bold text-gray-900">{personalInfo?.fullName || "Name"}</div>
+        <div className="text-[2.5px] text-amber-700">{personalInfo?.jobTitle || "Title"}</div>
+      </div>
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-4 border-r border-gray-100 pr-0.5">
+          <div className="h-[1px] bg-amber-600 rounded w-full mb-0.5" />
+          <div className="h-[1px] bg-gray-200 rounded w-full" />
+        </div>
+        <div className="col-span-8 space-y-0.5">
+          <div className="h-[1px] bg-gray-200 rounded w-full" />
+          <div className="h-[1px] bg-gray-200 rounded w-4/5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MiniResumePreview({ resume }) {
   switch (resume?.template) {
+    case "atlantic-blue":
+      return <MiniAtlanticPreview resume={resume} bg="#1E293B" />;
+    case "hunter-green":
+      return <MiniAtlanticPreview resume={resume} bg="#23372F" />;
+    case "quicksilver":
+      return <MiniAtlanticPreview resume={resume} bg="#64748B" />;
+    case "cobalt-edge":
+      return <MiniCobaltPreview resume={resume} />;
+    case "mercury-flow":
+    case "steady-form":
+    case "silver-banner":
+      return <MiniMercuryPreview resume={resume} />;
+    case "saffron-line":
+      return <MiniSaffronPreview resume={resume} />;
     case "classic":
+    case "classic-clear":
+    case "classic-serif":
+    case "editorial-rule":
       return <MiniClassicPreview resume={resume} />;
     case "minimal":
+    case "precision-line":
+    case "condensed-rule":
       return <MiniMinimalPreview resume={resume} />;
     case "professional":
+    case "refined":
       return <MiniProfessionalPreview resume={resume} />;
+    case "sidebar":
+    case "true-blue":
     case "modern":
     default:
       return <MiniModernPreview resume={resume} />;
@@ -194,7 +315,7 @@ function MiniResumePreview({ resume }) {
 // ──────────────────────────────────────────────
 // Three-dot vertical menu (FlowCV style)
 // ──────────────────────────────────────────────
-function CardMenu({ onEdit, onDuplicate, onDownload, onDelete }) {
+function CardMenu({ onEdit, onDuplicate, onShare, onExport, onExportJSON, onDelete }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -215,7 +336,7 @@ function CardMenu({ onEdit, onDuplicate, onDownload, onDelete }) {
         <MoreVertical size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 bottom-full mb-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50">
+        <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50">
           <button
             onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(e); }}
             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -231,11 +352,25 @@ function CardMenu({ onEdit, onDuplicate, onDownload, onDelete }) {
             <span>Duplicate</span>
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onDownload(e); }}
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onShare(e); }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Share2 size={15} className="text-emerald-600" />
+            <span>Share & Analytics</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onExport(e); }}
             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Download size={15} />
-            <span>Download</span>
+            <span>Export (.docx, .txt, .pdf)</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onExportJSON(e); }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <FileCode size={15} />
+            <span>Export JSON Backup</span>
           </button>
           <div className="my-1 h-px bg-gray-100 mx-3" />
           <button
@@ -261,8 +396,52 @@ export function ResumeManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("updated");
   const [viewMode, setViewMode] = useState("grid");
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedResumeForExport, setSelectedResumeForExport] = useState(null);
+  const [selectedResumeForShare, setSelectedResumeForShare] = useState(null);
 
   useEffect(() => { fetchResumes(); }, []);
+
+  const handleImportResume = async (importedData) => {
+    try {
+      const data = {
+        title: importedData.title || `${importedData.personalInfo?.fullName || "Imported"} Resume`,
+        template: importedData.template || "modern",
+        sectionOrder: importedData.sectionOrder || [
+          "personalInfo",
+          "summary",
+          "experience",
+          "education",
+          "skills",
+          "projects",
+          "certifications",
+          "languages",
+          "awards",
+          "publications",
+          "organizations",
+          "interests",
+          "references",
+          "declaration",
+          "custom",
+        ],
+        ...importedData,
+        hiddenSections: [],
+      };
+
+      setLoading(true);
+      const res = await createResume(data);
+      if (res.data.success && res.data.resume) {
+        toast.success("Resume imported successfully with full layout and structure!");
+        navigate(`/resume/${res.data.resume._id}/edit`);
+      } else {
+        toast.error("Failed to import resume");
+      }
+    } catch (err) {
+      toast.error("Failed to import resume");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchResumes = async () => {
     try {
@@ -276,16 +455,8 @@ export function ResumeManagement() {
     }
   };
 
-  const handleCreateNew = async () => {
-    try {
-      const res = await createResume({ title: "My Resume", template: "modern" });
-      if (res.data.success && res.data.resume) {
-        toast.success("New resume created!");
-        navigate(`/resume/${res.data.resume._id}/edit`);
-      }
-    } catch (err) {
-      toast.error("Failed to create resume");
-    }
+  const handleCreateNew = () => {
+    navigate("/resume/new");
   };
 
   const handleDelete = async (id, e) => {
@@ -404,6 +575,16 @@ export function ResumeManagement() {
                 <List size={16} />
               </button>
             </div>
+
+            {/* Import Button */}
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:text-black transition cursor-pointer shadow-2xs"
+              title="Import resume from PDF or JSON"
+            >
+              <Upload size={15} />
+              <span className="hidden sm:inline">Import</span>
+            </button>
           </div>
         </div>
 
@@ -427,10 +608,10 @@ export function ResumeManagement() {
             <div>
               <button
                 onClick={handleCreateNew}
-                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[3/4]"
+                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[3/4]"
               >
-                <Plus size={20} className="text-gray-400 group-hover:text-gray-600 transition-colors mb-1.5" />
-                <span className="text-sm text-gray-500 group-hover:text-gray-700 font-medium transition-colors">
+                <Plus size={20} className="text-gray-400 group-hover:text-black transition-colors mb-1.5" />
+                <span className="text-sm text-gray-500 group-hover:text-black font-medium transition-colors">
                   New resume
                 </span>
               </button>
@@ -443,10 +624,10 @@ export function ResumeManagement() {
             <div>
               <button
                 onClick={handleCreateNew}
-                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[3/4]"
+                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[3/4]"
               >
-                <Plus size={20} className="text-gray-400 group-hover:text-gray-600 transition-colors mb-1.5" />
-                <span className="text-sm text-gray-500 group-hover:text-gray-700 font-medium transition-colors">
+                <Plus size={20} className="text-gray-400 group-hover:text-black transition-colors mb-1.5" />
+                <span className="text-sm text-gray-500 group-hover:text-black font-medium transition-colors">
                   New resume
                 </span>
               </button>
@@ -468,9 +649,17 @@ export function ResumeManagement() {
                 {/* Info below the card (FlowCV style) */}
                 <div className="flex items-center justify-between mt-2 px-0.5">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">
-                      {res.title || "Untitled Resume"}
-                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        {res.title || "Untitled Resume"}
+                      </h3>
+                      {res.isPublic && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full shrink-0" title={`Public link active • ${res.viewsCount || 0} views`}>
+                          <Share2 size={9} />
+                          {res.viewsCount || 0}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400 mt-0.5 truncate">
                       edited {formatDate(res.updatedAt)}
                     </p>
@@ -480,7 +669,13 @@ export function ResumeManagement() {
                   <CardMenu
                     onEdit={(e) => { e.stopPropagation(); navigate(`/resume/${res._id}/edit`); }}
                     onDuplicate={(e) => handleDuplicate(res._id, e)}
-                    onDownload={(e) => { e.stopPropagation(); navigate(`/resume/${res._id}/preview`); }}
+                    onShare={(e) => { e.stopPropagation(); setSelectedResumeForShare(res); }}
+                    onExport={(e) => { e.stopPropagation(); setSelectedResumeForExport(res); }}
+                    onExportJSON={(e) => {
+                      e.stopPropagation();
+                      exportResumeBackup(res);
+                      toast.success("Resume JSON backup exported!");
+                    }}
                     onDelete={(e) => handleDelete(res._id, e)}
                   />
                 </div>
@@ -490,18 +685,39 @@ export function ResumeManagement() {
         ) : (
           /* ── List View ── */
           <div className="flex flex-col gap-2">
-            {/* New resume row */}
-            <button
-              onClick={handleCreateNew}
-              className="group flex items-center gap-4 bg-transparent border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-xl px-4 py-3 transition-all cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
-                <Plus size={18} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
-              </div>
-              <span className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">
-                New resume
-              </span>
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* New resume row */}
+              <button
+                onClick={handleCreateNew}
+                className="group flex items-center gap-4 bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl px-4 py-3 transition-all cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
+                  <Plus size={18} className="text-gray-400 group-hover:text-black transition-colors" />
+                </div>
+                <div className="text-left">
+                  <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors block">
+                    New resume
+                  </span>
+                  <span className="text-xs text-gray-400">Start from a blank canvas</span>
+                </div>
+              </button>
+
+              {/* Import resume row */}
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="group flex items-center gap-4 bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl px-4 py-3 transition-all cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
+                  <Upload size={18} className="text-gray-400 group-hover:text-black transition-colors" />
+                </div>
+                <div className="text-left">
+                  <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors block">
+                    Import resume
+                  </span>
+                  <span className="text-xs text-gray-400">Upload PDF or JSON backup</span>
+                </div>
+              </button>
+            </div>
 
             {/* Resume Rows */}
             {filteredResumes.map((res) => (
@@ -517,9 +733,17 @@ export function ResumeManagement() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-900 truncate">
-                    {res.title || "Untitled Resume"}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-gray-900 truncate">
+                      {res.title || "Untitled Resume"}
+                    </h3>
+                    {res.isPublic && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full shrink-0" title={`Public link active • ${res.viewsCount || 0} views`}>
+                        <Share2 size={10} />
+                        {res.viewsCount || 0} views
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 mt-0.5">
                     edited {formatDate(res.updatedAt)}
                   </p>
@@ -534,7 +758,13 @@ export function ResumeManagement() {
                 <CardMenu
                   onEdit={(e) => { e.stopPropagation(); navigate(`/resume/${res._id}/edit`); }}
                   onDuplicate={(e) => handleDuplicate(res._id, e)}
-                  onDownload={(e) => { e.stopPropagation(); navigate(`/resume/${res._id}/preview`); }}
+                  onShare={(e) => { e.stopPropagation(); setSelectedResumeForShare(res); }}
+                  onExport={(e) => { e.stopPropagation(); setSelectedResumeForExport(res); }}
+                  onExportJSON={(e) => {
+                    e.stopPropagation();
+                    exportResumeBackup(res);
+                    toast.success("Resume JSON backup exported!");
+                  }}
                   onDelete={(e) => handleDelete(res._id, e)}
                 />
               </div>
@@ -554,6 +784,37 @@ export function ResumeManagement() {
       <footer className="py-6 text-center text-xs text-gray-400 border-t border-gray-200 bg-white">
         © CareerForge-AI. All rights reserved.
       </footer>
+
+      <ImportResumeModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportData={handleImportResume}
+      />
+
+      {selectedResumeForExport && (
+        <ExportResumeModal
+          isOpen={Boolean(selectedResumeForExport)}
+          onClose={() => setSelectedResumeForExport(null)}
+          resume={selectedResumeForExport}
+          onOpenShareModal={() => {
+            const r = selectedResumeForExport;
+            setSelectedResumeForExport(null);
+            setSelectedResumeForShare(r);
+          }}
+        />
+      )}
+
+      {selectedResumeForShare && (
+        <ShareResumeModal
+          isOpen={Boolean(selectedResumeForShare)}
+          onClose={() => {
+            setSelectedResumeForShare(null);
+            fetchResumes();
+          }}
+          resumeId={selectedResumeForShare._id}
+          initialPublic={selectedResumeForShare.isPublic}
+        />
+      )}
     </div>
   );
 }

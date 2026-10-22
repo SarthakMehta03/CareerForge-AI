@@ -30,3 +30,17 @@ export const checkGrammar = (text) => API.post("/ai/resume/grammar", { text });
 export const suggestSkills = (resumeData) => API.post("/ai/resume/skills", { resumeData });
 export const analyzeATS = (resumeData) => API.post("/ai/resume/ats", { resumeData });
 export const matchJobDescription = (resumeData, jobDescription) => API.post("/ai/resume/job-match", { resumeData, jobDescription });
+export const polishBulletPoint = (bullet, mode) => API.post("/ai/resume/polish-bullet", { bullet, mode });
+export const tailorResumeForJob = (resumeData, jobDescription, companyName, jobUrl) =>
+  API.post("/ai/resume/tailor-job", { resumeData, jobDescription, companyName, jobUrl });
+export const forkAndTailorResume = (resumeId, jobDescription, companyName, jobUrl) =>
+  API.post("/ai/resume/fork-tailor", { resumeId, jobDescription, companyName, jobUrl });
+export const generateInterviewPrepKit = (resumeData) => API.post("/ai/resume/interview-prep", { resumeData });
+export const generateCoverLetter = (resumeData, jobDescription, companyName, tone) =>
+  API.post("/ai/resume/cover-letter", { resumeData, jobDescription, companyName, tone });
+
+// Public Sharing & Analytics
+export const getPublicResume = (id) => API.get(`/resumes/public/${id}`);
+export const trackPublicDownload = (id) => API.post(`/resumes/public/${id}/track-download`);
+export const togglePublicStatus = (id, isPublic) => API.put(`/resumes/${id}/share`, { isPublic });
+export const getResumeAnalytics = (id) => API.get(`/resumes/${id}/analytics`);

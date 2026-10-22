@@ -1,12 +1,34 @@
-import React, { useState } from "react";
-import { Sparkles, Target, CheckCircle2, Lightbulb, RefreshCw, Wand2, FileSearch } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Sparkles,
+  Target,
+  CheckCircle2,
+  Lightbulb,
+  RefreshCw,
+  Wand2,
+  FileSearch,
+  X,
+  GitFork,
+  MessageSquare,
+  ArrowRight,
+  Layers,
+  HelpCircle,
+  FileText,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useResume } from "../../../context/ResumeContext";
 import { analyzeATS, matchJobDescription, generateSummary, suggestSkills } from "../../../services/resumeService";
 import { calculateClientATS } from "../../../utils/atsCalculator";
+import { analyzeKeywords } from "../../../utils/keywordMatcher";
+import QualityLinterCard from "./QualityLinterCard";
 
-export function AIToolsPanel() {
-  const { resume, setResume } = useResume();
+export function AIToolsPanel({
+  onOpenQualityModal,
+  onOpenJobMatch,
+  onOpenInterviewPrep,
+  onOpenCoverLetter,
+}) {
+  const { resume, setResume, setHighlightKeywords, setMissingKeywords } = useResume();
   const [atsLoading, setAtsLoading] = useState(false);
   const [atsData, setAtsData] = useState(null);
 
@@ -16,6 +38,42 @@ export function AIToolsPanel() {
 
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [suggestSkillsLoading, setSuggestSkillsLoading] = useState(false);
+
+  // Live keyword analysis state (local UI display)
+  const [keywordStats, setKeywordStats] = useState(null); // { matched: [], missing: [] }
+  const debounceRef = useRef(null);
+
+  // ── Live Keyword Analysis: debounce 500ms after job desc changes ──
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!jobDesc.trim()) {
+      // Clear all highlighting when job description is empty
+      setHighlightKeywords([]);
+      setMissingKeywords([]);
+      setKeywordStats(null);
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      const { matched, missing } = analyzeKeywords(jobDesc, resume);
+      setHighlightKeywords(matched);
+      setMissingKeywords(missing);
+      setKeywordStats({ matched, missing });
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [jobDesc, resume, setHighlightKeywords, setMissingKeywords]);
+
+  // Clear keyword highlights when component unmounts (user leaves AI tab)
+  useEffect(() => {
+    return () => {
+      setHighlightKeywords([]);
+      setMissingKeywords([]);
+    };
+  }, [setHighlightKeywords, setMissingKeywords]);
 
   const handleRunATS = async () => {
     try {
@@ -110,10 +168,13 @@ export function AIToolsPanel() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">AI Enhancement Suite</h2>
-            <p className="text-xs text-gray-500">Analyze ATS parseability, match job descriptions, and write AI content.</p>
+            <p className="text-xs text-gray-500">Analyze ATS parseability, quality & consistency linter, and match job descriptions.</p>
           </div>
         </div>
       </div>
+
+      {/* Real-Time Resume Quality & Consistency Linter */}
+      <QualityLinterCard onOpenModal={onOpenQualityModal} />
 
       {/* 1. ATS Score & Analysis Tool */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs">
@@ -211,9 +272,103 @@ export function AIToolsPanel() {
           <span>Analyze Job Description Match</span>
         </button>
 
+        {/* ── Live Keyword Match Stats ── */}
+        {keywordStats && (
+          <div className="mt-4 space-y-3">
+            {/* Summary bar */}
+            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="text-center">
+                  <p className="text-lg font-black text-green-600">{keywordStats.matched.length}</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Found</p>
+                </div>
+                <div className="w-px h-8 bg-gray-200" />
+                <div className="text-center">
+                  <p className="text-lg font-black text-amber-600">{keywordStats.missing.length}</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Missing</p>
+                </div>
+                <div className="w-px h-8 bg-gray-200" />
+                <div className="text-center">
+                  <p className="text-lg font-black text-gray-900">
+                    {keywordStats.matched.length + keywordStats.missing.length > 0
+                      ? Math.round(
+                          (keywordStats.matched.length /
+                            (keywordStats.matched.length + keywordStats.missing.length)) *
+                            100
+                        )
+                      : 0}
+                    %
+                  </p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Match</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setJobDesc("");
+                  setKeywordStats(null);
+                  setHighlightKeywords([]);
+                  setMissingKeywords([]);
+                }}
+                className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                title="Clear job description & highlights"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Matched keywords */}
+            {keywordStats.matched.length > 0 && (
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-green-700 mb-1.5 flex items-center gap-1">
+                  <CheckCircle2 size={12} />
+                  <span>Matched Keywords ({keywordStats.matched.length})</span>
+                </h4>
+                <div className="flex flex-wrap gap-1">
+                  {keywordStats.matched.map((kw) => (
+                    <span
+                      key={kw}
+                      className="bg-green-100 text-green-800 border border-green-200 text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Missing keywords */}
+            {keywordStats.missing.length > 0 && (
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-amber-700 mb-1.5 flex items-center gap-1">
+                  <Lightbulb size={12} />
+                  <span>Missing Keywords ({keywordStats.missing.length})</span>
+                </h4>
+                <div className="flex flex-wrap gap-1">
+                  {keywordStats.missing.map((kw) => (
+                    <span
+                      key={kw}
+                      className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2 italic">
+                  💡 Add these keywords to your resume to improve your match score.
+                </p>
+              </div>
+            )}
+
+            <p className="text-[10px] text-gray-400 text-center">
+              ✨ Keywords are highlighted live on the resume preview
+            </p>
+          </div>
+        )}
+
         {jobMatchResult && (
           <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-2 text-xs">
-            <h4 className="font-bold text-gray-900">Analysis Results</h4>
+            <h4 className="font-bold text-gray-900">AI Analysis Results</h4>
             <p className="text-gray-700 whitespace-pre-line leading-relaxed">{jobMatchResult}</p>
           </div>
         )}
@@ -247,6 +402,84 @@ export function AIToolsPanel() {
             {suggestSkillsLoading ? <RefreshCw size={13} className="animate-spin" /> : <Wand2 size={13} className="text-gray-700" />}
           </button>
         </div>
+      </div>
+
+      {/* 4. Tailor for Job Description (1-Click Fork) */}
+      <div className="bg-gradient-to-br from-gray-900 to-black text-white rounded-2xl p-5 shadow-sm space-y-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-400 text-black flex items-center justify-center font-bold">
+            <GitFork size={16} />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-white">Tailor for Job (1-Click Fork)</h4>
+            <p className="text-[11px] text-gray-400">Match score, duplicate & auto-populate keywords</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-300 leading-relaxed">
+          Paste a target job posting or URL. The AI will score ATS match, duplicate your resume into a dedicated version (e.g., <em>"Tailored for Stripe"</em>), and pre-populate missing keywords into your experience bullets.
+        </p>
+
+        <button
+          type="button"
+          onClick={onOpenJobMatch}
+          className="w-full py-2.5 bg-white hover:bg-gray-100 text-black font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+        >
+          <span>Open Tailor & Fork Engine</span>
+          <ArrowRight size={14} />
+        </button>
+      </div>
+
+      {/* 5. AI Interview Prep Kit */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <MessageSquare size={16} />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-gray-900">AI Interview Prep Kit</h4>
+            <p className="text-[11px] text-gray-500">STAR talking points & Top 10 Recruiter questions</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-600 leading-relaxed">
+          Transforms each of your work experience bullets into structured interview stories (Situation, Task, Action, Result) and predicts the top 10 technical & behavioral questions recruiters will ask.
+        </p>
+
+        <button
+          type="button"
+          onClick={onOpenInterviewPrep}
+          className="w-full py-2.5 bg-black hover:bg-gray-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+        >
+          <Sparkles size={13} className="text-amber-400" />
+          <span>Launch AI Interview Prep Kit</span>
+        </button>
+      </div>
+
+      {/* 6. AI Cover Letter Generator */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+            <FileText size={16} />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-gray-900">AI Cover Letter Generator</h4>
+            <p className="text-[11px] text-gray-500">Synced with resume skills & target company tone</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-600 leading-relaxed">
+          Draft a compelling, recruiter-ready cover letter tailored directly to any company or job description. Choose between Confident, Startup, Executive, or Creative tones, edit directly, and export to PDF.
+        </p>
+
+        <button
+          type="button"
+          onClick={onOpenCoverLetter}
+          className="w-full py-2.5 bg-black hover:bg-gray-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+        >
+          <Sparkles size={13} className="text-purple-300" />
+          <span>Draft AI Cover Letter</span>
+        </button>
       </div>
     </div>
   );

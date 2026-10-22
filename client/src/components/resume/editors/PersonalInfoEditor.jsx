@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Sparkles, Camera, Check, Plus, Link2, X, Lightbulb, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Camera, Check, Plus, Link2, X, Lightbulb, ChevronDown, ChevronUp, Sliders } from "lucide-react";
 import toast from "react-hot-toast";
 import { useResume } from "../../../context/ResumeContext";
+import PhotoDisplay from "../PhotoDisplay";
+import PhotoEditorModal from "../modals/PhotoEditorModal";
 
 const PERSONAL_INFO_TIPS = [
   {
@@ -52,6 +54,9 @@ export function PersonalInfoEditor({ onDone }) {
   const [showVisa, setShowVisa] = useState(Boolean(info.visa));
   const [showPassport, setShowPassport] = useState(Boolean(info.passport));
 
+  // Photo Editor Modal state
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
+
   // Tips panel state
   const [showTips, setShowTips] = useState(false);
   const [expandedTip, setExpandedTip] = useState(null);
@@ -83,7 +88,8 @@ export function PersonalInfoEditor({ onDone }) {
             photo: reader.result,
           },
         }));
-        toast.success("Photo uploaded!");
+        toast.success("Photo uploaded! Frame and style your headshot.");
+        setIsPhotoEditorOpen(true);
       };
       reader.readAsDataURL(file);
     }
@@ -193,33 +199,60 @@ export function PersonalInfoEditor({ onDone }) {
           </div>
         </div>
 
-        {/* Right: Photo Circle Upload (FlowCV Style) */}
-        <div className="flex flex-col items-center gap-1 shrink-0 self-center sm:self-start">
+        {/* Right: Photo Upload & Framing Controls (FlowCV Style) */}
+        <div className="flex flex-col items-center gap-1.5 shrink-0 self-center sm:self-start">
           <label className="text-[11px] font-bold text-gray-600 mb-0.5">Photo</label>
           <div className="relative group">
-            <label className="w-24 h-24 rounded-full bg-gray-100 border border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200/80 transition overflow-hidden shadow-2xs">
-              {info.photo ? (
-                <img src={info.photo} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
+            {info.photo ? (
+              <div
+                onClick={() => setIsPhotoEditorOpen(true)}
+                className="cursor-pointer group relative"
+                title="Click to frame & style photo"
+              >
+                <PhotoDisplay
+                  photo={info.photo}
+                  photoSettings={resume.photoSettings}
+                  primaryColor={resume.theme?.primaryColor}
+                  sizeOverride={96}
+                  className="shadow-2xs transition-transform group-hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold rounded-[inherit] pointer-events-none">
+                  <Sliders size={16} />
+                  <span className="mt-0.5">Edit</span>
+                </div>
+              </div>
+            ) : (
+              <label className="w-24 h-24 rounded-full bg-gray-100 border border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200/80 transition overflow-hidden shadow-2xs">
                 <div className="flex flex-col items-center text-gray-400">
                   <Camera size={24} />
                   <span className="text-[9px] font-bold mt-1 text-gray-500">Upload</span>
                 </div>
-              )}
-              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-            </label>
+                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+              </label>
+            )}
 
             {info.photo && (
               <button
                 type="button"
                 onClick={removePhoto}
-                className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition"
+                className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition z-10"
                 title="Remove photo"
               >
                 <X size={12} />
               </button>
             )}
           </div>
+
+          {info.photo && (
+            <button
+              type="button"
+              onClick={() => setIsPhotoEditorOpen(true)}
+              className="flex items-center gap-1 text-[10px] font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg border border-gray-200 transition cursor-pointer"
+            >
+              <Sliders size={11} />
+              <span>Frame & Style</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -436,6 +469,12 @@ export function PersonalInfoEditor({ onDone }) {
           <span>Done</span>
         </button>
       </div>
+
+      {/* ── Profile Photo Editor & Styling Modal ── */}
+      <PhotoEditorModal
+        isOpen={isPhotoEditorOpen}
+        onClose={() => setIsPhotoEditorOpen(false)}
+      />
     </div>
   );
 }

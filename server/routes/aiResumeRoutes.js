@@ -9,6 +9,11 @@ const {
   suggestSkills,
   analyzeATS,
   matchJobDescription,
+  polishBulletPoint,
+  tailorResumeForJob,
+  forkAndTailorResume,
+  generateInterviewPrepKit,
+  generateCoverLetter,
 } = require("../controllers/aiResumeController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -23,5 +28,10 @@ router.post("/grammar", checkGrammar);
 router.post("/skills", suggestSkills);
 router.post("/ats", analyzeATS);
 router.post("/job-match", matchJobDescription);
+router.post("/polish-bullet", polishBulletPoint);
+router.post("/tailor-job", tailorResumeForJob);
+router.post("/fork-tailor", forkAndTailorResume);
+router.post("/interview-prep", generateInterviewPrepKit);
+router.post("/cover-letter", generateCoverLetter);
 
 module.exports = router;

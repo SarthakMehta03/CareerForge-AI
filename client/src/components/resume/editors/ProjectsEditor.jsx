@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useResume } from "../../../context/ResumeContext";
 import InputField from "../../auth/InputField";
 import { improveProject } from "../../../services/resumeService";
+import BulletPointAssistant from "./BulletPointAssistant";
 
 export function ProjectsEditor() {
   const { resume, setResume } = useResume();
@@ -157,8 +158,8 @@ export function ProjectsEditor() {
                     </div>
 
                     <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="text-xs font-semibold text-gray-700">Project Description</label>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-xs font-semibold text-gray-700">Project Description & Achievements</label>
                         <button
                           type="button"
                           onClick={() => handleAIImprove(proj)}
@@ -166,16 +167,14 @@ export function ProjectsEditor() {
                           className="flex items-center gap-1 text-xs text-black hover:underline font-bold"
                         >
                           {loadingId === proj.id ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                          <span>Improve Description (AI)</span>
+                          <span>Improve All (AI)</span>
                         </button>
                       </div>
 
-                      <textarea
-                        rows={3}
+                      <BulletPointAssistant
                         value={proj.description}
-                        onChange={(e) => handleUpdate(proj.id, "description", e.target.value)}
+                        onChange={(val) => handleUpdate(proj.id, "description", val)}
                         placeholder="• Architected full-stack web application featuring real-time state synchronization...&#10;• Implemented JWT authentication..."
-                        className="w-full rounded-xl border border-gray-300 p-3 text-sm text-gray-900 focus:border-black focus:ring-1 focus:ring-black outline-none transition"
                       />
                     </div>
                   </div>

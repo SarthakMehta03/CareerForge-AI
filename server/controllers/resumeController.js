@@ -1,5 +1,6 @@
 const Resume = require("../models/Resume");
 const { analyzeATS } = require("../services/aiResumeService");
+const { getDemoDataForTemplate } = require("../utils/templateDemoData");
 
 // Default initial resume structure
 const defaultResumeData = {
@@ -43,27 +44,17 @@ const defaultResumeData = {
 // 1. Create Resume
 const createResume = async (req, res) => {
   try {
-    const { title, template } = req.body;
-
+    const data = req.body || {};
     const newResume = new Resume({
       ...defaultResumeData,
+      ...data,
       userId: req.user.id,
-      title: title || "My Resume",
-      template: template || "modern",
-      personalInfo: {
-        ...defaultResumeData.personalInfo,
-        fullName: "",
-        jobTitle: "",
-        email: "",
-        phone: "",
-        location: "",
-        linkedin: "",
-        github: "",
-        portfolio: "",
-        photo: "",
-      },
+      // Ensure required fields have sensible defaults
+      title: data.title || "My Resume",
+      template: data.template || "modern",
     });
 
+    // Recalculate ATS score based on the full payload
     const atsResult = await analyzeATS(newResume);
     newResume.atsScore = atsResult.atsScore;
 
@@ -242,6 +233,134 @@ const duplicateResume = async (req, res) => {
   }
 };
 
+// 7. Get Public Resume (No Auth Required)
+const getPublicResume = async (req, res) => {
+  try {
+    const resume = await Resume.findById(req.params.id);
+
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        message: "Resume not found",
+      });
+    }
+
+    if (!resume.isPublic) {
+      return res.status(403).json({
+        success: false,
+        message: "This resume is private. The public link has been disabled by the author.",
+      });
+    }
+
+    // Atomically increment views count and update lastViewedAt
+    resume.viewsCount = (resume.viewsCount || 0) + 1;
+    resume.lastViewedAt = new Date();
+    await resume.save();
+
+    res.status(200).json({
+      success: true,
+      resume,
+    });
+  } catch (error) {
+    console.error("Get Public Resume Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load public resume",
+    });
+  }
+};
+
+// 8. Track Public Download (Increment Download Counter)
+const trackPublicDownload = async (req, res) => {
+  try {
+    const resume = await Resume.findById(req.params.id);
+    if (!resume) {
+      return res.status(404).json({ success: false, message: "Resume not found" });
+    }
+
+    resume.downloadsCount = (resume.downloadsCount || 0) + 1;
+    await resume.save();
+
+    res.status(200).json({
+      success: true,
+      downloadsCount: resume.downloadsCount,
+    });
+  } catch (error) {
+    console.error("Track Download Error:", error);
+    res.status(500).json({ success: false, message: "Failed to track download" });
+  }
+};
+
+// 9. Toggle Public Sharing Status (Protected)
+const togglePublicStatus = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        message: "Resume not found or unauthorized access",
+      });
+    }
+
+    const { isPublic } = req.body;
+    resume.isPublic = typeof isPublic === "boolean" ? isPublic : !resume.isPublic;
+    await resume.save();
+
+    res.status(200).json({
+      success: true,
+      message: resume.isPublic ? "Public link activated" : "Public link disabled",
+      isPublic: resume.isPublic,
+      viewsCount: resume.viewsCount || 0,
+      downloadsCount: resume.downloadsCount || 0,
+      lastViewedAt: resume.lastViewedAt,
+    });
+  } catch (error) {
+    console.error("Toggle Public Status Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to toggle public status",
+    });
+  }
+};
+
+// 10. Get Resume Analytics (Protected)
+const getResumeAnalytics = async (req, res) => {
+  try {
+    const resume = await Resume.findOne(
+      { _id: req.params.id, userId: req.user.id },
+      "isPublic viewsCount downloadsCount lastViewedAt title"
+    );
+
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        message: "Resume not found or unauthorized",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      analytics: {
+        isPublic: resume.isPublic || false,
+        viewsCount: resume.viewsCount || 0,
+        downloadsCount: resume.downloadsCount || 0,
+        lastViewedAt: resume.lastViewedAt,
+        title: resume.title,
+      },
+    });
+  } catch (error) {
+    console.error("Get Resume Analytics Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch analytics",
+    });
+  }
+};
+
 module.exports = {
   createResume,
   getResumes,
@@ -249,4 +368,8 @@ module.exports = {
   updateResume,
   deleteResume,
   duplicateResume,
+  getPublicResume,
+  trackPublicDownload,
+  togglePublicStatus,
+  getResumeAnalytics,
 };

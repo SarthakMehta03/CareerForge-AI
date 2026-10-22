@@ -20,6 +20,7 @@ import {
   Heart,
   FileCode,
   Plus,
+  Upload,
   Eye,
   EyeOff,
   Pencil,
@@ -42,9 +43,14 @@ import {
   X,
   Check,
   Lightbulb,
+  ShieldCheck,
+  Share2,
+  RotateCw,
+  RotateCcw,
+  History,
+  MessageSquare,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import Navbar from "../components/auth/Navbar";
 import { ResumeProvider, useResume, initialResumeState } from "../context/ResumeContext";
 import { getResumeById, createResume, deleteResume, duplicateResume } from "../services/resumeService";
 import { downloadResumePDF } from "../utils/pdfExport";
@@ -73,6 +79,17 @@ import AddContentModal from "../components/resume/modals/AddContentModal";
 import ATSAnalysisModal from "../components/resume/modals/ATSAnalysisModal";
 import JobMatchModal from "../components/resume/modals/JobMatchModal";
 import TemplateSelector from "../components/resume/modals/TemplateSelector";
+import ImportResumeModal from "../components/resume/modals/ImportResumeModal";
+import QualityLinterModal from "../components/resume/modals/QualityLinterModal";
+import PhotoEditorModal from "../components/resume/modals/PhotoEditorModal";
+import ExportResumeModal from "../components/resume/modals/ExportResumeModal";
+import ShareResumeModal from "../components/resume/modals/ShareResumeModal";
+import VersionHistoryModal from "../components/resume/modals/VersionHistoryModal";
+import InterviewPrepModal from "../components/resume/modals/InterviewPrepModal";
+import CoverLetterModal from "../components/resume/modals/CoverLetterModal";
+import PhotoDisplay from "../components/resume/PhotoDisplay";
+import { exportResumeBackup } from "../utils/resumeParser";
+import { lintResume } from "../utils/resumeLinter";
 
 const sectionMeta = {
   summary: { label: "Summary", icon: FileText },
@@ -124,7 +141,22 @@ const SECTION_TIPS = {
 
 function ResumeBuilderContent({ resumeId }) {
   const navigate = useNavigate();
-  const { resume, setResume, activeSection, setActiveSection, saveStatus, setTitle, toggleSectionVisibility } = useResume();
+  const {
+    resume,
+    setResume,
+    activeSection,
+    setActiveSection,
+    saveStatus,
+    setTitle,
+    toggleSectionVisibility,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useResume();
+
+  // Real-time resume linter calculation
+  const lintResults = lintResume(resume);
 
   // track which specific entry is being edited
   const [editingEntry, setEditingEntry] = useState(null);
@@ -142,6 +174,15 @@ function ResumeBuilderContent({ resumeId }) {
   const [isATSModalOpen, setIsATSModalOpen] = useState(false);
   const [isJobMatchModalOpen, setIsJobMatchModalOpen] = useState(false);
   const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isQualityModalOpen, setIsQualityModalOpen] = useState(false);
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const [isInterviewPrepOpen, setIsInterviewPrepOpen] = useState(false);
+  const [isCoverLetterOpen, setIsCoverLetterOpen] = useState(false);
+  const [coverLetterPrefill, setCoverLetterPrefill] = useState({ companyName: "", jobDescription: "" });
 
   // Expanded sections state in content editor (accordion: opening one closes others)
   // Starts collapsed by default for clean FlowCV layout
@@ -155,6 +196,15 @@ function ResumeBuilderContent({ resumeId }) {
 
   // Mobile active tab ('content', 'preview')
   const [mobileTab, setMobileTab] = useState("content");
+
+  // Drag and Drop state for section reordering
+  const [draggedSectionIndex, setDraggedSectionIndex] = useState(null);
+  const [dragOverSectionIndex, setDragOverSectionIndex] = useState(null);
+
+  // Drag and Drop state for entry reordering within sections
+  const [draggedEntry, setDraggedEntry] = useState(null); // { secKey: string, index: number } | null
+  const [dragOverEntryIndex, setDragOverEntryIndex] = useState(null);
+  const dragIsActiveRef = useRef(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -170,6 +220,109 @@ function ResumeBuilderContent({ resumeId }) {
     // Single-section accordion: opening one closes all other sections
     setExpandedSections((prev) => (prev[secKey] ? {} : { [secKey]: true }));
     setActiveSection(secKey);
+  };
+
+  // ── Drag & Drop Handlers for Section Reordering ──
+  const handleSectionDragStart = (e, index) => {
+    e.stopPropagation();
+    dragIsActiveRef.current = true;
+    setDraggedSectionIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `section_${index}`);
+  };
+
+  const handleSectionDragOver = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedSectionIndex === null || draggedSectionIndex === index) return;
+    setDragOverSectionIndex(index);
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleSectionDrop = (e, targetIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedSectionIndex === null || draggedSectionIndex === targetIndex) {
+      setDraggedSectionIndex(null);
+      setDragOverSectionIndex(null);
+      setTimeout(() => { dragIsActiveRef.current = false; }, 120);
+      return;
+    }
+
+    const currentOrder = [...order];
+    const [movedSec] = currentOrder.splice(draggedSectionIndex, 1);
+    currentOrder.splice(targetIndex, 0, movedSec);
+
+    // Keep personalInfo pinned at the top in full order
+    const fullOrder = ["personalInfo", ...currentOrder];
+    setResume((prev) => ({
+      ...prev,
+      sectionOrder: fullOrder,
+    }));
+
+    setDraggedSectionIndex(null);
+    setDragOverSectionIndex(null);
+    setTimeout(() => { dragIsActiveRef.current = false; }, 120);
+    toast.success("Section reordered");
+  };
+
+  const handleSectionDragEnd = () => {
+    setDraggedSectionIndex(null);
+    setDragOverSectionIndex(null);
+    setTimeout(() => { dragIsActiveRef.current = false; }, 120);
+  };
+
+  // ── Drag & Drop Handlers for Entry Reordering ──
+  const handleEntryDragStart = (e, secKey, index) => {
+    e.stopPropagation();
+    dragIsActiveRef.current = true;
+    setDraggedEntry({ secKey, index });
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `entry_${secKey}_${index}`);
+  };
+
+  const handleEntryDragOver = (e, secKey, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedEntry || draggedEntry.secKey !== secKey || draggedEntry.index === index) return;
+    setDragOverEntryIndex(index);
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleEntryDrop = (e, secKey, targetIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedEntry || draggedEntry.secKey !== secKey || draggedEntry.index === targetIndex) {
+      setDraggedEntry(null);
+      setDragOverEntryIndex(null);
+      setTimeout(() => { dragIsActiveRef.current = false; }, 120);
+      return;
+    }
+
+    const sourceIndex = draggedEntry.index;
+    setResume((prev) => {
+      const list = [...(prev[secKey] || [])];
+      if (sourceIndex < 0 || sourceIndex >= list.length || targetIndex < 0 || targetIndex >= list.length) {
+        return prev;
+      }
+      const [movedItem] = list.splice(sourceIndex, 1);
+      list.splice(targetIndex, 0, movedItem);
+      return {
+        ...prev,
+        [secKey]: list,
+      };
+    });
+
+    setDraggedEntry(null);
+    setDragOverEntryIndex(null);
+    setTimeout(() => { dragIsActiveRef.current = false; }, 120);
+    toast.success("Entry reordered");
+  };
+
+  const handleEntryDragEnd = () => {
+    setDraggedEntry(null);
+    setDragOverEntryIndex(null);
+    setTimeout(() => { dragIsActiveRef.current = false; }, 120);
   };
 
   const handleDuplicate = async () => {
@@ -200,6 +353,36 @@ function ResumeBuilderContent({ resumeId }) {
     setIsDownloading(true);
     await downloadResumePDF("resume-preview-content", resume);
     setIsDownloading(false);
+  };
+
+  const handleImportData = (importedData) => {
+    setResume((prev) => ({
+      ...prev,
+      title: importedData.title || prev.title,
+      template: importedData.template || prev.template,
+      personalInfo: {
+        ...(prev.personalInfo || {}),
+        ...(importedData.personalInfo || {}),
+      },
+      summary: importedData.summary !== undefined ? importedData.summary : prev.summary,
+      experience: importedData.experience !== undefined ? importedData.experience : prev.experience,
+      education: importedData.education !== undefined ? importedData.education : prev.education,
+      skills: importedData.skills !== undefined ? importedData.skills : prev.skills,
+      projects: importedData.projects !== undefined ? importedData.projects : prev.projects,
+      certifications: importedData.certifications !== undefined ? importedData.certifications : prev.certifications,
+      languages: importedData.languages !== undefined ? importedData.languages : prev.languages,
+      awards: importedData.awards !== undefined ? importedData.awards : prev.awards,
+      publications: importedData.publications !== undefined ? importedData.publications : prev.publications,
+      organizations: importedData.organizations !== undefined ? importedData.organizations : prev.organizations,
+      references: importedData.references !== undefined ? importedData.references : prev.references,
+      declaration: importedData.declaration?.statement ? importedData.declaration : prev.declaration,
+      interests: importedData.interests !== undefined ? importedData.interests : prev.interests,
+      customSections: importedData.customSections !== undefined ? importedData.customSections : prev.customSections,
+      theme: importedData.theme ? { ...prev.theme, ...importedData.theme } : prev.theme,
+      sectionOrder: importedData.sectionOrder || prev.sectionOrder,
+      hiddenSections: [], // always reset hidden sections on import — don't carry over visibility state from external files
+    }));
+    toast.success("Resume data and layout structure imported successfully!");
   };
 
   const renderSectionEditor = (secKey) => {
@@ -282,6 +465,10 @@ function ResumeBuilderContent({ resumeId }) {
   };
 
   const handleAddEntry = (secKey) => {
+    // If section was flagged hidden, automatically unhide it when user adds an entry
+    if (hidden.includes(secKey)) {
+      toggleSectionVisibility(secKey);
+    }
     if (secKey === "summary") {
       setEditingEntry({ section: "summary", entryId: "summary_0" });
       return;
@@ -356,82 +543,23 @@ function ResumeBuilderContent({ resumeId }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-between font-sans">
-      <Navbar />
-
-      {/* ── FlowCV Top Navigation Bar ── */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2.5 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Left Navigation Tabs */}
-          <div className="flex items-center gap-2">
+      {/* ── FlowCV Sleek Workspace Header ── */}
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-2.5 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Left Cluster: Back to Resumes + Inline Title + Cloud Save status */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={() => navigate("/resumes")}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition cursor-pointer"
-              title="Overview / My Resumes"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition cursor-pointer"
+              title="Back to all resumes"
             >
-              <LayoutGrid size={15} />
-              <span className="hidden sm:inline">Overview</span>
+              <ArrowLeft size={16} />
+              <span className="hidden sm:inline">Resumes</span>
             </button>
 
-            <div className="h-4 w-px bg-gray-200 mx-1" />
+            <div className="h-4 w-px bg-gray-200" />
 
-            {/* Content Tab */}
-            <button
-              onClick={() => setActiveTab("content")}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                activeTab === "content"
-                  ? "bg-black text-white shadow-xs"
-                  : "text-gray-600 hover:text-black hover:bg-gray-100"
-              }`}
-            >
-              <FileText size={15} />
-              <span>Content</span>
-            </button>
-
-            {/* Customize Tab */}
-            <button
-              onClick={() => setActiveTab("customize")}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                activeTab === "customize"
-                  ? "bg-black text-white shadow-xs"
-                  : "text-gray-600 hover:text-black hover:bg-gray-100"
-              }`}
-            >
-              <Sliders size={15} />
-              <span>Customize</span>
-            </button>
-
-            {/* AI Tools Tab */}
-            <button
-              onClick={() => setActiveTab("ai")}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                activeTab === "ai"
-                  ? "bg-black text-white shadow-xs"
-                  : "text-gray-600 hover:text-black hover:bg-gray-100"
-              }`}
-            >
-              <Sparkles size={15} className={activeTab === "ai" ? "text-amber-400" : "text-amber-500"} />
-              <span>AI Tools</span>
-            </button>
-          </div>
-
-          {/* Right Top Controls */}
-          <div className="flex items-center gap-3">
-            {/* Save Status Indicator */}
-            <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-500 font-medium mr-1">
-              {saveStatus === "saving" && (
-                <span className="flex items-center gap-1 text-gray-600">
-                  <RefreshCw size={13} className="animate-spin" /> Saving...
-                </span>
-              )}
-              {saveStatus === "saved" && (
-                <span className="flex items-center gap-1 text-green-700 font-semibold">
-                  <CheckCircle size={13} /> Saved
-                </span>
-              )}
-            </div>
-
-            {/* Resume Title Selector Dropdown / Inline Editor */}
-            <div className="relative flex items-center">
+            <div className="flex items-center gap-2">
               {isTitleEditing ? (
                 <input
                   type="text"
@@ -440,128 +568,235 @@ function ResumeBuilderContent({ resumeId }) {
                   onChange={(e) => setTitle(e.target.value)}
                   onBlur={() => setIsTitleEditing(false)}
                   onKeyDown={(e) => e.key === "Enter" && setIsTitleEditing(false)}
-                  className="text-xs font-bold text-gray-900 bg-gray-100 border border-black rounded-xl px-3 py-1.5 outline-none w-36 sm:w-44"
+                  className="text-xs font-bold text-gray-900 bg-gray-50 border border-black rounded-lg px-2.5 py-1 outline-none w-36 sm:w-48"
                 />
               ) : (
                 <button
                   onClick={() => setIsTitleEditing(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 px-3.5 py-2 rounded-xl border border-gray-200 transition cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-bold text-gray-900 hover:bg-gray-100 px-2 py-1 rounded-lg transition group cursor-pointer"
+                  title="Click to rename resume"
                 >
-                  <span className="truncate max-w-[120px]">{resume.title || "Resume 1"}</span>
-                  <ChevronDown size={14} className="text-gray-500" />
+                  <span className="truncate max-w-[120px] sm:max-w-[180px]">{resume.title || "Untitled Resume"}</span>
+                  <Pencil size={11} className="text-gray-400 group-hover:text-black shrink-0" />
                 </button>
               )}
-            </div>
 
-            {/* ATS Score Button */}
+              {/* Subtle Save Status */}
+              {saveStatus === "saving" && (
+                <span className="text-[11px] text-gray-400 flex items-center gap-1 ml-0.5" title="Saving changes...">
+                  <RefreshCw size={11} className="animate-spin text-gray-500" />
+                </span>
+              )}
+              {saveStatus === "saved" && (
+                <span className="hidden md:flex items-center gap-1 text-[11px] text-emerald-600 font-medium ml-0.5" title="All changes saved to cloud">
+                  <CheckCircle size={12} />
+                  <span>Saved</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Center Cluster: Segmented Control Pill */}
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200/80 shrink-0">
+            {/* Content Tab */}
             <button
-              onClick={() => setIsATSModalOpen(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl border border-gray-200 transition cursor-pointer"
-              title="Check ATS Compatibility Score"
+              onClick={() => setActiveTab("content")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                activeTab === "content"
+                  ? "bg-white text-black shadow-2xs"
+                  : "text-gray-600 hover:text-black"
+              }`}
             >
-              <Sparkles size={13} className="text-amber-500" />
-              <span className="hidden sm:inline">ATS Score</span>
+              <FileText size={14} />
+              <span>Content</span>
             </button>
 
-            {/* Download Button */}
+            {/* Customize Tab */}
             <button
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition cursor-pointer shadow-xs disabled:opacity-60"
-              title="Download Resume as PDF"
+              onClick={() => setActiveTab("customize")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                activeTab === "customize"
+                  ? "bg-white text-black shadow-2xs"
+                  : "text-gray-600 hover:text-black"
+              }`}
             >
-              {isDownloading ? (
-                <>
-                  <span>Exporting...</span>
-                  <RefreshCw size={14} className="animate-spin" />
-                </>
-              ) : (
-                <>
-                  <span>Download</span>
-                  <Download size={14} />
-                </>
+              <Sliders size={14} />
+              <span>Customize</span>
+            </button>
+
+            {/* AI Tools Tab */}
+            <button
+              onClick={() => setActiveTab("ai")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                activeTab === "ai"
+                  ? "bg-white text-black shadow-2xs"
+                  : "text-gray-600 hover:text-black"
+              }`}
+            >
+              <Sparkles size={14} className={activeTab === "ai" ? "text-amber-500" : "text-amber-600"} />
+              <span>AI Tools</span>
+              {lintResults.issuesCount > 0 && (
+                <span
+                  className="text-[10px] px-1.5 py-0.2 rounded-full font-extrabold bg-amber-400 text-black pointer-events-none"
+                  title={`${lintResults.issuesCount} consistency issue(s) detected`}
+                >
+                  {lintResults.issuesCount}
+                </span>
               )}
+            </button>
+          </div>
+
+          {/* Right Cluster: History, Score, Share, Export & Overflow */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* History Undo / Redo & Snapshots */}
+            <div className="hidden lg:flex items-center gap-0.5 bg-gray-100 rounded-xl p-0.5 border border-gray-200">
+              <button
+                type="button"
+                onClick={undo}
+                disabled={!canUndo}
+                className="p-1.5 rounded-lg text-gray-700 hover:text-black hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
+                title="Undo (Ctrl+Z)"
+              >
+                <RotateCcw size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={redo}
+                disabled={!canRedo}
+                className="p-1.5 rounded-lg text-gray-700 hover:text-black hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
+                title="Redo (Ctrl+Y)"
+              >
+                <RotateCw size={13} />
+              </button>
+              <div className="w-[1px] h-3 bg-gray-300 mx-0.5" />
+              <button
+                type="button"
+                onClick={() => setIsVersionModalOpen(true)}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-gray-700 hover:text-black hover:bg-white transition cursor-pointer"
+                title="Resume Versions & Snapshots"
+              >
+                <History size={12} className="text-indigo-600" />
+                <span className="hidden xl:inline">Versions</span>
+                {resume.versions && resume.versions.length > 0 && (
+                  <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1 rounded-full font-bold">
+                    {resume.versions.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Quality Score Pill */}
+            <button
+              onClick={() => setIsQualityModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-2xs transition cursor-pointer"
+              title="Resume Quality & Consistency Linter (Click to audit)"
+            >
+              <ShieldCheck size={14} className={lintResults.allChecksPassed ? "text-green-600" : "text-amber-500"} />
+              <span className="hidden sm:inline">Score</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
+                  lintResults.allChecksPassed
+                    ? "bg-green-100 text-green-900"
+                    : "bg-amber-100 text-amber-900"
+                }`}
+              >
+                {lintResults.qualityScore}%
+              </span>
+            </button>
+
+            {/* Share & Analytics Button */}
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs transition cursor-pointer"
+              title="Share Link & Recruiter View Analytics"
+            >
+              <Share2 size={13} className={resume.isPublic ? "text-emerald-600" : "text-gray-500"} />
+              <span>Share</span>
+              {resume.isPublic && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Public Link Active" />
+              )}
+            </button>
+
+            {/* Export Primary CTA Button */}
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="flex items-center gap-1.5 bg-black hover:bg-gray-800 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition cursor-pointer shadow-xs"
+              title="Export Resume (PDF, Word .docx, ATS Plain-Text .txt)"
+            >
+              <Download size={13} />
+              <span>Export</span>
             </button>
 
             {/* Options Three-Dot Menu */}
             <div className="relative" ref={optionsMenuRef}>
               <button
                 onClick={() => setIsOptionsMenuOpen(!isOptionsMenuOpen)}
-                className="p-2 text-gray-600 hover:text-black rounded-xl hover:bg-gray-100 transition cursor-pointer border border-gray-200"
-                title="Options"
+                className="p-1.5 text-gray-600 hover:text-black rounded-xl hover:bg-gray-100 transition cursor-pointer border border-gray-200"
+                title="More Options"
               >
                 <MoreVertical size={16} />
               </button>
 
               {isOptionsMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in duration-150">
-                  <button
-                    onClick={() => {
-                      setIsOptionsMenuOpen(false);
-                      setIsTitleEditing(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
-                  >
-                    <Pencil size={14} />
-                    <span>Edit Title</span>
-                  </button>
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-200 py-1.5 z-50 animate-in fade-in duration-150">
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
                       handleDuplicate();
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                   >
-                    <Copy size={14} />
-                    <span>Duplicate</span>
+                    <Copy size={14} className="text-gray-500" />
+                    <span>Duplicate Resume</span>
                   </button>
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
-                      setIsATSModalOpen(true);
+                      setIsTemplateSelectorOpen(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                   >
-                    <Sparkles size={14} className="text-amber-500" />
-                    <span>ATS Compatibility Score</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsOptionsMenuOpen(false);
-                      setIsJobMatchModalOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
-                  >
-                    <Target size={14} className="text-gray-700" />
-                    <span>Match Job Description</span>
+                    <LayoutGrid size={14} className="text-gray-500" />
+                    <span>Change Template</span>
                   </button>
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
                       navigate(`/resume/${resumeId}/preview`);
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                   >
-                    <Eye size={14} />
+                    <Eye size={14} className="text-gray-500" />
                     <span>Full Page Preview</span>
                   </button>
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
-                      handleDownloadPDF();
+                      setIsImportModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                   >
-                    <Download size={14} />
-                    <span>Download PDF</span>
+                    <Upload size={14} className="text-gray-500" />
+                    <span>Import (PDF / JSON)</span>
                   </button>
-                  <div className="my-1 border-t border-gray-100 mx-3" />
+                  <button
+                    onClick={() => {
+                      setIsOptionsMenuOpen(false);
+                      exportResumeBackup(resume);
+                      toast.success("Resume JSON backup exported!");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                  >
+                    <FileCode size={14} className="text-gray-500" />
+                    <span>Export JSON Backup</span>
+                  </button>
+                  <div className="my-1 border-t border-gray-100 mx-2" />
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
                       handleDelete();
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition cursor-pointer"
                   >
                     <Trash2 size={14} />
                     <span>Delete Resume</span>
@@ -601,109 +836,145 @@ function ResumeBuilderContent({ resumeId }) {
             {/* CONTENT TAB VIEW */}
             {activeTab === "content" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                {/* 1. Personal Information Header Card */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all">
-                  <div className="p-6 relative">
-                    <button
-                      type="button"
-                      onClick={() => toggleSectionExpand("personalInfo")}
-                      className="absolute top-5 right-5 w-9 h-9 rounded-full bg-black hover:bg-gray-800 text-white flex items-center justify-center shadow-md transition-all cursor-pointer"
-                      title="Edit Personal Information"
-                    >
-                      <Pencil size={15} />
-                    </button>
+                {/* 1. Sleek Personal Information Header Card */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden transition-all">
+                  <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                      {/* Compact Profile Avatar / Photo */}
+                      {personalInfo.photo ? (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsPhotoEditorOpen(true);
+                          }}
+                          className="cursor-pointer group relative shrink-0"
+                          title="Click to frame & style profile photo"
+                        >
+                          <PhotoDisplay
+                            photo={personalInfo.photo}
+                            photoSettings={resume.photoSettings}
+                            primaryColor={resume.theme?.primaryColor}
+                            sizeOverride={52}
+                            className="rounded-full shadow-2xs ring-2 ring-gray-100 group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => toggleSectionExpand("personalInfo")}
+                          className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 shrink-0 cursor-pointer hover:bg-gray-200 hover:text-gray-600 transition"
+                          title="Click to add photo & details"
+                        >
+                          <User size={22} />
+                        </div>
+                      )}
 
-                    <div className="flex items-start justify-between pr-12">
-                      <div className="space-y-1.5">
-                        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                          {personalInfo.fullName || "Your Name"}
-                        </h2>
+                      {/* Name & Contact Info Chips */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight truncate">
+                            {personalInfo.fullName || "Your Full Name"}
+                          </h2>
+                        </div>
 
-                        <div className="flex flex-col gap-1 text-xs text-gray-500 pt-1">
-                          {personalInfo.email ? (
-                            <div className="flex items-center gap-2 text-gray-700 font-medium">
-                              <Mail size={14} className="text-gray-400" />
-                              <span>{personalInfo.email}</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <Mail size={14} />
-                              <span>Email address</span>
-                            </div>
+                        {/* Contact Chips */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1.5 text-xs">
+                          {personalInfo.email && (
+                            <span className="inline-flex items-center gap-1 text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-medium">
+                              <Mail size={11} className="text-gray-400" />
+                              <span className="truncate max-w-[150px] sm:max-w-[200px]">{personalInfo.email}</span>
+                            </span>
                           )}
-
-                          {personalInfo.phone ? (
-                            <div className="flex items-center gap-2 text-gray-700 font-medium">
-                              <Phone size={14} className="text-gray-400" />
+                          {personalInfo.phone && (
+                            <span className="inline-flex items-center gap-1 text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-medium">
+                              <Phone size={11} className="text-gray-400" />
                               <span>{personalInfo.phone}</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <Phone size={14} />
-                              <span>Phone number</span>
-                            </div>
+                            </span>
                           )}
-
-                          {personalInfo.location ? (
-                            <div className="flex items-center gap-2 text-gray-700 font-medium">
-                              <MapPin size={14} className="text-gray-400" />
-                              <span>{personalInfo.location}</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <MapPin size={14} />
-                              <span>Address / Location</span>
-                            </div>
+                          {personalInfo.location && (
+                            <span className="inline-flex items-center gap-1 text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-medium">
+                              <MapPin size={11} className="text-gray-400" />
+                              <span className="truncate max-w-[130px]">{personalInfo.location}</span>
+                            </span>
+                          )}
+                          {!personalInfo.email && !personalInfo.phone && !personalInfo.location && (
+                            <span className="text-xs text-gray-400 italic">No contact info added yet</span>
                           )}
                         </div>
                       </div>
-
-                      <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 shrink-0">
-                        {personalInfo.photo ? (
-                          <img
-                            src={personalInfo.photo}
-                            alt="Profile"
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <Camera size={26} />
-                        )}
-                      </div>
                     </div>
+
+                    {/* Edit Profile Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionExpand("personalInfo")}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                        expandedSections.personalInfo
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-gray-700 hover:text-black hover:bg-gray-100 border-gray-200"
+                      }`}
+                      title="Edit Personal Information"
+                    >
+                      <Pencil size={12} />
+                      <span>{expandedSections.personalInfo ? "Close" : "Edit"}</span>
+                    </button>
                   </div>
 
                   {expandedSections.personalInfo && (
-                    <div className="border-t border-gray-100 p-6 bg-gray-50/50">
+                    <div className="border-t border-gray-100 p-5 bg-gray-50/50">
                       <PersonalInfoEditor onDone={() => setExpandedSections(prev => ({ ...prev, personalInfo: false }))} />
                     </div>
                   )}
                 </div>
 
                 {/* 2. Accordion Cards for Content Sections */}
-                <div className="space-y-3">
-                  {order.map((secKey) => {
+                <div className="space-y-2.5">
+                  {order.map((secKey, secIdx) => {
                     const meta = sectionMeta[secKey] || { label: secKey, icon: FileCode };
                     const Icon = meta.icon;
                     const isExpanded = expandedSections[secKey];
                     const isHidden = hidden.includes(secKey);
                     const entries = getEntries(secKey);
+                    const isDraggedSection = draggedSectionIndex === secIdx;
+                    const isSectionDragOver = dragOverSectionIndex === secIdx && draggedSectionIndex !== secIdx;
 
                     return (
                       <div
                         key={secKey}
-                        className={`bg-white rounded-2xl border transition-all shadow-xs overflow-hidden ${
-                          isExpanded ? "border-gray-800 border-l-4" : "border-gray-200 hover:border-gray-300"
-                        } ${isHidden ? "opacity-60 bg-gray-50" : ""}`}
+                        onDragOver={(e) => handleSectionDragOver(e, secIdx)}
+                        onDrop={(e) => handleSectionDrop(e, secIdx)}
+                        className={`bg-white rounded-xl border transition-all shadow-2xs overflow-hidden ${
+                          isSectionDragOver
+                            ? "border-t-4 border-t-black ring-2 ring-black/10 scale-[1.01]"
+                            : isExpanded
+                            ? "border-gray-800 border-l-4"
+                            : "border-gray-200 hover:border-gray-300"
+                        } ${isDraggedSection ? "opacity-35 scale-[0.99] border-dashed border-gray-400" : ""}`}
                       >
                         <div
-                          onClick={() => toggleSectionExpand(secKey)}
-                          className="p-5 flex items-center justify-between cursor-pointer select-none"
+                          onClick={() => {
+                            if (dragIsActiveRef.current) return;
+                            toggleSectionExpand(secKey);
+                          }}
+                          className="px-4 py-3 sm:py-3.5 flex items-center justify-between cursor-pointer select-none"
                         >
-                          <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-900 flex items-center justify-center shrink-0">
-                              <Icon size={18} />
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            {/* GripVertical Section Drag Handle */}
+                            <div
+                              draggable
+                              onDragStart={(e) => handleSectionDragStart(e, secIdx)}
+                              onDragEnd={handleSectionDragEnd}
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1 text-gray-300 hover:text-black hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing transition-colors shrink-0"
+                              title="Drag handle to reorder section"
+                            >
+                              <GripVertical size={16} />
                             </div>
-                            <div className="flex items-center gap-2">
+
+                            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 flex items-center justify-center shrink-0">
+                              <Icon size={16} />
+                            </div>
+
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
                               {editingHeading === secKey ? (
                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                   <input
@@ -712,7 +983,7 @@ function ResumeBuilderContent({ resumeId }) {
                                     value={sectionHeadings[secKey] ?? meta.label}
                                     onChange={(e) => setSectionHeadings({ ...sectionHeadings, [secKey]: e.target.value })}
                                     onKeyDown={(e) => e.key === "Enter" && setEditingHeading(null)}
-                                    className="text-sm font-bold text-gray-900 bg-gray-100 border border-black rounded-lg px-2 py-0.5 outline-none"
+                                    className="text-xs font-bold text-gray-900 bg-gray-100 border border-black rounded-lg px-2 py-0.5 outline-none"
                                   />
                                   <button
                                     type="button"
@@ -720,14 +991,21 @@ function ResumeBuilderContent({ resumeId }) {
                                     className="p-1 text-white bg-black hover:bg-gray-800 rounded-md transition cursor-pointer"
                                     title="Save heading"
                                   >
-                                    <Check size={13} />
+                                    <Check size={12} />
                                   </button>
                                 </div>
                               ) : (
                                 <>
-                                  <h3 className={`text-base font-bold text-gray-900 ${isHidden ? "line-through text-gray-400" : ""}`}>
+                                  <h3 className="text-sm font-bold truncate text-gray-900">
                                     {sectionHeadings[secKey] || meta.label}
                                   </h3>
+                                  <span className="text-[10px] font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
+                                    {entries.length === 0
+                                      ? "Empty"
+                                      : secKey === "skills"
+                                      ? `${entries.length} skills`
+                                      : `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`}
+                                  </span>
                                   {isExpanded && (
                                     <button
                                       type="button"
@@ -735,10 +1013,10 @@ function ResumeBuilderContent({ resumeId }) {
                                         e.stopPropagation();
                                         setEditingHeading(secKey);
                                       }}
-                                      className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-black bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                      className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-black bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-md transition cursor-pointer ml-auto sm:ml-0"
                                     >
-                                      <Pencil size={12} />
-                                      <span>Edit Heading</span>
+                                      <Pencil size={10} />
+                                      <span className="hidden sm:inline">Rename</span>
                                     </button>
                                   )}
                                 </>
@@ -746,9 +1024,9 @@ function ResumeBuilderContent({ resumeId }) {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 text-gray-400 hover:text-black">
-                              {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          <div className="flex items-center gap-1 shrink-0 ml-2">
+                            <div className="p-1 text-gray-400 hover:text-black">
+                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </div>
                           </div>
                         </div>
@@ -758,16 +1036,44 @@ function ResumeBuilderContent({ resumeId }) {
                             <div className="divide-y divide-gray-100">
                               {entries.map((entry, idx) => {
                                 const isEntryHidden = Boolean(entry.hidden) || (secKey === "summary" && hidden.includes("summary"));
+                                const isDraggedEntry = draggedEntry?.secKey === secKey && draggedEntry?.index === idx;
+                                const isEntryDragOver = dragOverEntryIndex === idx && draggedEntry?.secKey === secKey && draggedEntry?.index !== idx;
+                                const canDragEntry = secKey !== "summary" && secKey !== "declaration" && entries.length > 1;
+
                                 return (
                                   <div
                                     key={entry.id || idx}
-                                    onClick={() => setEditingEntry({ section: secKey, entryId: entry.id || "summary_0", index: idx })}
-                                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 cursor-pointer group ${
-                                      isEntryHidden ? "opacity-50 bg-gray-50/50" : ""
-                                    }`}
+                                    onDragOver={(e) => canDragEntry && handleEntryDragOver(e, secKey, idx)}
+                                    onDrop={(e) => canDragEntry && handleEntryDrop(e, secKey, idx)}
+                                    onClick={() => {
+                                      if (dragIsActiveRef.current) return;
+                                      setEditingEntry({ section: secKey, entryId: entry.id || "summary_0", index: idx });
+                                    }}
+                                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 cursor-pointer group transition-all ${
+                                      isEntryDragOver
+                                        ? "border-t-2 border-black bg-gray-100/80"
+                                        : isDraggedEntry
+                                        ? "opacity-35 bg-gray-100 border-dashed border-gray-300"
+                                        : ""
+                                    } ${isEntryHidden ? "opacity-50 bg-gray-50/50" : ""}`}
                                   >
-                                    <GripVertical size={16} className="text-gray-300 group-hover:text-gray-500 shrink-0 cursor-grab" />
-                                    <span className={`flex-1 text-sm ${isEntryHidden ? "text-gray-400 line-through" : "text-gray-700"} truncate`}>
+                                    {canDragEntry ? (
+                                      <div
+                                        draggable
+                                        onDragStart={(e) => handleEntryDragStart(e, secKey, idx)}
+                                        onDragEnd={handleEntryDragEnd}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="p-1 text-gray-300 hover:text-black hover:bg-gray-200 rounded cursor-grab active:cursor-grabbing transition shrink-0"
+                                        title="Drag handle to reorder entry"
+                                      >
+                                        <GripVertical size={16} />
+                                      </div>
+                                    ) : (
+                                      <div className="p-1 text-gray-200 shrink-0">
+                                        <GripVertical size={16} />
+                                      </div>
+                                    )}
+                                    <span className={`flex-1 text-sm ${isEntryHidden ? "text-gray-400" : "text-gray-700"} truncate`}>
                                       {getEntryLabel(secKey, entry, idx)}
                                     </span>
                                     <button
@@ -826,15 +1132,26 @@ function ResumeBuilderContent({ resumeId }) {
                   })}
                 </div>
 
-                {/* 3. + Add Content Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsAddContentOpen(true)}
-                  className="w-full py-4 px-4 rounded-2xl border-2 border-dashed border-gray-300 hover:border-black bg-white hover:bg-gray-50 text-gray-700 hover:text-black font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
-                >
-                  <Plus size={18} />
-                  <span>Add Content / Section</span>
-                </button>
+                {/* 3. Add Section & Import Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddContentOpen(true)}
+                    className="flex-1 py-3.5 px-4 rounded-2xl border-2 border-dashed border-gray-300 hover:border-black bg-white hover:bg-gray-50 text-gray-700 hover:text-black font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                  >
+                    <Plus size={16} />
+                    <span>Add Section</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="flex-1 py-3.5 px-4 rounded-2xl border border-gray-200 hover:border-black bg-white hover:bg-gray-50 text-gray-700 hover:text-black font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                  >
+                    <Upload size={16} />
+                    <span>Import Resume (PDF / JSON)</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -842,7 +1159,17 @@ function ResumeBuilderContent({ resumeId }) {
             {activeTab === "customize" && <CustomizePanel />}
 
             {/* AI TOOLS TAB VIEW */}
-            {activeTab === "ai" && <AIToolsPanel />}
+            {activeTab === "ai" && (
+              <AIToolsPanel
+                onOpenQualityModal={() => setIsQualityModalOpen(true)}
+                onOpenJobMatch={() => setIsJobMatchModalOpen(true)}
+                onOpenInterviewPrep={() => setIsInterviewPrepOpen(true)}
+                onOpenCoverLetter={() => {
+                  setCoverLetterPrefill({ companyName: "", jobDescription: "" });
+                  setIsCoverLetterOpen(true);
+                }}
+              />
+            )}
           </div>
 
           {/* ── Right Column: Live Resume Preview (6 Cols Desktop) ── */}
@@ -943,11 +1270,65 @@ function ResumeBuilderContent({ resumeId }) {
       <JobMatchModal
         isOpen={isJobMatchModalOpen}
         onClose={() => setIsJobMatchModalOpen(false)}
+        resumeId={resumeId || resume._id}
+        onOpenCoverLetter={(data) => {
+          setIsJobMatchModalOpen(false);
+          setCoverLetterPrefill(data || { companyName: "", jobDescription: "" });
+          setIsCoverLetterOpen(true);
+        }}
       />
 
       <TemplateSelector
         isOpen={isTemplateSelectorOpen}
         onClose={() => setIsTemplateSelectorOpen(false)}
+      />
+
+      <QualityLinterModal
+        isOpen={isQualityModalOpen}
+        onClose={() => setIsQualityModalOpen(false)}
+      />
+
+      <ImportResumeModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportData={handleImportData}
+      />
+
+      <PhotoEditorModal
+        isOpen={isPhotoEditorOpen}
+        onClose={() => setIsPhotoEditorOpen(false)}
+      />
+
+      <ExportResumeModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        resume={resume}
+        onOpenShareModal={() => setIsShareModalOpen(true)}
+      />
+
+      <ShareResumeModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        resumeId={resumeId}
+        initialPublic={resume.isPublic}
+      />
+
+      <VersionHistoryModal
+        isOpen={isVersionModalOpen}
+        onClose={() => setIsVersionModalOpen(false)}
+      />
+
+      <InterviewPrepModal
+        isOpen={isInterviewPrepOpen}
+        onClose={() => setIsInterviewPrepOpen(false)}
+        resume={resume}
+      />
+
+      <CoverLetterModal
+        isOpen={isCoverLetterOpen}
+        onClose={() => setIsCoverLetterOpen(false)}
+        initialCompany={coverLetterPrefill.companyName}
+        initialJobDesc={coverLetterPrefill.jobDescription}
       />
     </div>
   );

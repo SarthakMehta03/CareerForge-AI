@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useResume } from "../../../context/ResumeContext";
 import InputField from "../../auth/InputField";
 import { improveExperience } from "../../../services/resumeService";
+import BulletPointAssistant from "./BulletPointAssistant";
 
 export function ExperienceEditor() {
   const { resume, setResume } = useResume();
@@ -187,7 +188,7 @@ export function ExperienceEditor() {
                     </div>
 
                     <div>
-                      <div className="flex justify-between items-center mb-1">
+                      <div className="flex justify-between items-center mb-2">
                         <label className="text-xs font-semibold text-gray-700">
                           Description & Key Achievements
                         </label>
@@ -202,16 +203,14 @@ export function ExperienceEditor() {
                           ) : (
                             <Sparkles size={12} />
                           )}
-                          <span>Improve Experience (AI Bullets)</span>
+                          <span>Improve All (AI Bullets)</span>
                         </button>
                       </div>
 
-                      <textarea
-                        rows={4}
+                      <BulletPointAssistant
                         value={exp.description}
-                        onChange={(e) => handleUpdate(exp.id, "description", e.target.value)}
+                        onChange={(val) => handleUpdate(exp.id, "description", val)}
                         placeholder="• Spearheaded backend architecture optimization reducing API latency by 35%...&#10;• Led a team of 4 engineers delivering microservices..."
-                        className="w-full rounded-xl border border-gray-300 p-3 text-sm text-gray-900 focus:border-black focus:ring-1 focus:ring-black outline-none transition"
                       />
                     </div>
                   </div>
