@@ -129,7 +129,7 @@ export function ModernTemplate({ resume, highlightKeywords = [] }) {
             />
             <div className="flex flex-col" style={styles.entryGapStyle}>
               {activeExp.map((exp) => (
-                <div key={exp.id || Math.random()}>
+                <div key={exp.id || Math.random()} className="resume-entry">
                   <div className="flex justify-between items-baseline">
                     <h3 className="font-bold text-gray-900 text-xs">
                       {theme.expTitleOrder === "title_employer"
@@ -165,7 +165,7 @@ export function ModernTemplate({ resume, highlightKeywords = [] }) {
             />
             <div className="flex flex-col" style={styles.entryGapStyle}>
               {activeEdu.map((edu) => (
-                <div key={edu.id || Math.random()}>
+                <div key={edu.id || Math.random()} className="resume-entry">
                   <div className="flex justify-between items-baseline">
                     <h3 className="font-bold text-gray-900 text-xs">
                       {theme.eduTitleOrder === "degree_school"
@@ -309,7 +309,7 @@ export function ModernTemplate({ resume, highlightKeywords = [] }) {
             />
             <div className="flex flex-col" style={styles.entryGapStyle}>
               {activeProj.map((proj) => (
-                <div key={proj.id || Math.random()}>
+                <div key={proj.id || Math.random()} className="resume-entry">
                   <div className="flex justify-between items-baseline">
                     <h3 className="font-bold text-gray-900 text-xs">{H(proj.title)}</h3>
                     <span className="text-[11px] text-gray-500">{proj.startDate} {proj.endDate ? `– ${proj.endDate}` : ""}</span>
@@ -343,7 +343,7 @@ export function ModernTemplate({ resume, highlightKeywords = [] }) {
             />
             <div className="space-y-1.5">
               {activeCerts.map((cert) => (
-                <div key={cert.id || Math.random()} className="text-[11px]">
+                <div key={cert.id || Math.random()} className="text-[11px] resume-entry">
                   <span className="font-bold text-gray-900">{H(cert.name)}</span>
                   {cert.issuer && <span className="text-gray-600 ml-1">({H(cert.issuer)}{cert.date ? `, ${cert.date}` : ""})</span>}
                 </div>
@@ -365,7 +365,7 @@ export function ModernTemplate({ resume, highlightKeywords = [] }) {
             />
             <div className="grid grid-cols-2 gap-3 text-[11px]">
               {activeRefs.map((ref) => (
-                <div key={ref.id || Math.random()}>
+                <div key={ref.id || Math.random()} className="resume-entry">
                   <p className="font-bold text-gray-900">{H(ref.name)}</p>
                   <p className="text-gray-600">{H(ref.relationship)} {ref.company ? `at ${H(ref.company)}` : ""}</p>
                   {ref.email && <p className="text-gray-500">{ref.email}</p>}
@@ -413,7 +413,7 @@ export function ModernTemplate({ resume, highlightKeywords = [] }) {
               headingTextColor={headingTextColor}
               headingBorderColor={headingBorderColor}
             />
-            <p className="text-[11px] text-gray-700">{activeInt.map((i) => H(i.name || i)).reduce((prev, curr) => [prev, " • ", curr])}</p>
+            <p className="text-[11px] text-gray-700">{activeInt.map((i, idx) => (<React.Fragment key={idx}>{idx > 0 && " • "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>))}</p>
           </div>
         ) : null;
 

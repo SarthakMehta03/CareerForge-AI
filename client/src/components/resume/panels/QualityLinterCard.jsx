@@ -78,7 +78,7 @@ export function QualityLinterCard({ onOpenModal }) {
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
           <ShieldCheck size={15} className="text-gray-900" />
-          <span>Quality & Consistency Linter</span>
+          <span>Formatting & Consistency Audit</span>
         </h3>
 
         <div className="flex items-center gap-2">

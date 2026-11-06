@@ -170,87 +170,172 @@ async function suggestSkills(resumeData) {
 }
 
 // 7. ATS Analysis
-async function analyzeATS(resumeData) {
-  let score = 50;
+async function analyzeATS(resumeData = {}) {
+  const personalInfo = resumeData.personalInfo || {};
+  const experiences = resumeData.experience || [];
+  const projects = resumeData.projects || [];
+  const rawSkills = resumeData.skills || [];
+
+  let structureScore = 0;
+  if (personalInfo.fullName && personalInfo.fullName.trim().length > 2) structureScore += 4;
+  if (personalInfo.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalInfo.email)) structureScore += 4;
+  if (personalInfo.phone && personalInfo.phone.trim().length >= 7) structureScore += 4;
+  if (personalInfo.location && personalInfo.location.trim().length > 2) structureScore += 3;
+  if (personalInfo.linkedin || personalInfo.github) structureScore += 4;
+  if (personalInfo.jobTitle && personalInfo.jobTitle.trim().length > 2) structureScore += 3;
+  if (resumeData.summary && resumeData.summary.trim().length >= 40) structureScore += 3;
+  structureScore = Math.min(structureScore, 25);
+
+  const allBullets = [];
+  experiences.forEach((e) => {
+    if (e.description) {
+      e.description.split(/[\n•\r]+/).forEach((b) => {
+        if (b.trim().length > 10) allBullets.push(b.trim());
+      });
+    }
+  });
+  projects.forEach((p) => {
+    if (p.description) {
+      p.description.split(/[\n•\r]+/).forEach((b) => {
+        if (b.trim().length > 10) allBullets.push(b.trim());
+      });
+    }
+  });
+
+  const metricsRegex = /(?:\b\d+[\d,.]*(?:\s*(?:%|percent|k|m|million|billion|users|customers|downloads|clients|x|fold|\+))|\$\s*\d+[\d,.]*|\b(?:increased|decreased|reduced|boosted|saved|scaled|improved|generated|cut)\s+(?:by\s+)?\d+)/i;
+  const quantifiedBullets = allBullets.filter((b) => metricsRegex.test(b));
+
+  let impactScore = 7;
+  if (experiences.length > 0) {
+    if (quantifiedBullets.length >= 5) impactScore = 25;
+    else if (quantifiedBullets.length >= 3) impactScore = 20;
+    else if (quantifiedBullets.length >= 1) impactScore = 14;
+  }
+
+  const powerVerbs = ["architected", "engineered", "spearheaded", "orchestrated", "implemented", "accelerated", "designed", "automated", "streamlined", "optimized", "pioneered", "revamped", "scaled", "transformed", "delivered", "developed", "built", "launched", "integrated"];
+  const weakPhrases = ["responsible for", "worked on", "helped with", "assisted in", "handled", "tasked with", "was involved in"];
+  const weakFound = [];
+  let strongCount = 0;
+
+  allBullets.forEach((b) => {
+    const lower = b.toLowerCase();
+    for (const w of weakPhrases) {
+      if (lower.includes(w) && !weakFound.includes(w)) weakFound.push(w);
+    }
+    const firstWord = lower.split(/[^a-zA-Z]/)[0];
+    if (powerVerbs.includes(firstWord)) strongCount++;
+  });
+
+  let verbScore = 12;
+  if (allBullets.length > 0) {
+    const strongRatio = strongCount / allBullets.length;
+    if (strongRatio >= 0.5) verbScore = 22;
+    else if (strongRatio >= 0.25) verbScore = 17;
+    if (weakFound.length > 0) verbScore = Math.max(verbScore - weakFound.length * 2, 6);
+  }
+  verbScore = Math.min(verbScore, 25);
+
+  let skillScore = 8;
+  if (rawSkills.length >= 8) skillScore = 20;
+  else if (rawSkills.length >= 5) skillScore = 14;
+  if (resumeData.theme?.skillGrouping === "categorized") skillScore += 3;
+  skillScore = Math.min(skillScore, 25);
+
+  const baseScore = Math.min(Math.max(structureScore + impactScore + verbScore + skillScore, 38), 96);
+
+  try {
+    const candidateName = personalInfo.fullName || "Candidate";
+    const title = personalInfo.jobTitle || "Professional";
+    const skillList = rawSkills.map((s) => (typeof s === "object" ? s.name || "" : s)).filter(Boolean).join(", ");
+    const expSummary = experiences.map((e) => `${e.jobTitle || "Role"} at ${e.company || "Company"}: ${e.description || ""}`).join("\n");
+
+    const prompt = `You are a Senior Technical Recruiter and ATS Algorithm Specialist.
+Analyze this candidate's resume for ATS parseability and recruiter impact:
+Candidate: ${candidateName}
+Role / Title: ${title}
+Summary: ${resumeData.summary || "None"}
+Skills: ${skillList}
+Experience:
+${expSummary || "None"}
+
+Respond strictly with valid JSON (no markdown formatting, no code block backticks) matching this structure:
+{
+  "atsScore": ${baseScore},
+  "strengths": ["<strength 1 based on actual data>", "<strength 2>", "<strength 3>"],
+  "weaknesses": ["<specific weakness in this resume>", "<specific weakness 2>"],
+  "recommendations": ["<actionable step 1>", "<actionable step 2>", "<actionable step 3>"],
+  "missingKeywords": ["<relevant missing keyword 1 for ${title}>", "<keyword 2>", "<keyword 3>", "<keyword 4>", "<keyword 5>"],
+  "formattingIssues": ["<formatting advice 1>", "<formatting advice 2>"]
+}`;
+
+    const rawResponse = await callGemini(prompt);
+    const cleaned = rawResponse.replace(/```(?:json)?/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+
+    return {
+      success: true,
+      atsScore: parsed.atsScore || baseScore,
+      strengths: parsed.strengths || [],
+      weaknesses: parsed.weaknesses || [],
+      recommendations: parsed.recommendations || [],
+      missingKeywords: parsed.missingKeywords || ["CI/CD", "Testing", "System Design"],
+      formattingIssues: parsed.formattingIssues || ["Keep section headings standard.", "Use bullet points."],
+      subScores: {
+        structure: { score: structureScore, max: 25, label: "Structure & Contact", percentage: Math.round((structureScore / 25) * 100) },
+        impact: { score: impactScore, max: 25, label: "Measurable Impact (Metrics)", percentage: Math.round((impactScore / 25) * 100) },
+        actionVerbs: { score: verbScore, max: 25, label: "Action Verbs & Tone", percentage: Math.round((verbScore / 25) * 100) },
+        skills: { score: skillScore, max: 25, label: "Domain Keywords & Skills", percentage: Math.round((skillScore / 25) * 100) },
+      },
+      quantifiedBulletsCount: quantifiedBullets.length,
+      totalBulletsCount: allBullets.length,
+      weakPhrasesFound: weakFound,
+    };
+  } catch (err) {
+    console.warn("AI ATS analysis error, using algorithmic breakdown:", err.message);
+  }
+
   const strengths = [];
   const weaknesses = [];
   const recommendations = [];
 
-  // Check Personal Info
-  if (resumeData.personalInfo?.fullName) score += 5;
-  if (resumeData.personalInfo?.email) score += 5;
-  if (resumeData.personalInfo?.phone) score += 5;
-  if (resumeData.personalInfo?.linkedin) {
-    score += 5;
-    strengths.push("LinkedIn profile included for recruiter verification.");
-  } else {
+  if (personalInfo.email && personalInfo.phone) strengths.push("Contact details complete and easily parseable by ATS scanners.");
+  if (personalInfo.linkedin) strengths.push("Professional profile link (LinkedIn) included for recruiter validation.");
+  if (quantifiedBullets.length > 0) strengths.push(`Found ${quantifiedBullets.length} bullet points with measurable numbers or metrics.`);
+  if (rawSkills.length >= 6) strengths.push(`Comprehensive skill set with ${rawSkills.length} competencies listed.`);
+
+  if (quantifiedBullets.length === 0) {
+    weaknesses.push("Zero quantifiable metrics found in your work achievements.");
+    recommendations.push("Add numbers, percentages, or scale metrics (e.g. 'reduced load time by 30%', 'served 5,000+ users') to your bullet points.");
+  }
+  if (weakFound.length > 0) {
+    weaknesses.push(`Passive verbs detected: ${weakFound.map((w) => `"${w}"`).join(", ")}.`);
+    recommendations.push("Replace passive phrases like 'worked on' with active power verbs (Engineered, Architected, Automated).");
+  }
+  if (!personalInfo.linkedin) {
     weaknesses.push("Missing LinkedIn profile link.");
-    recommendations.push("Add your LinkedIn URL to increase contact options.");
+    recommendations.push("Add your LinkedIn URL to satisfy recruiter verification filters.");
   }
-
-  // Check Summary
-  if (resumeData.summary && resumeData.summary.length > 50) {
-    score += 10;
-    strengths.push("Professional summary present and descriptive.");
-  } else {
-    weaknesses.push("Summary section is empty or too brief.");
-    recommendations.push("Add a 3-4 sentence professional summary highlighting your key background.");
-  }
-
-  // Check Experience
-  if (resumeData.experience && resumeData.experience.length > 0) {
-    score += 15;
-    strengths.push(`Includes ${resumeData.experience.length} work experience entry/entries.`);
-    const hasBullets = resumeData.experience.some(e => e.description?.includes("•"));
-    if (hasBullets) {
-      score += 5;
-      strengths.push("Action-oriented bullet points used in experience.");
-    } else {
-      recommendations.push("Format work experience descriptions using action bullet points.");
-    }
-  } else {
-    weaknesses.push("No work experience added.");
-    recommendations.push("Add relevant work, internship, or leadership experience.");
-  }
-
-  // Check Education
-  if (resumeData.education && resumeData.education.length > 0) {
-    score += 10;
-    strengths.push("Education background clearly documented.");
-  } else {
-    weaknesses.push("Missing education details.");
-    recommendations.push("Add degree and institution details.");
-  }
-
-  // Check Skills
-  if (resumeData.skills && resumeData.skills.length >= 5) {
-    score += 10;
-    strengths.push(`Strong skills section with ${resumeData.skills.length} skills listed.`);
-  } else {
-    weaknesses.push("Skills section has fewer than 5 items.");
-    recommendations.push("List at least 6-8 core technical and soft skills.");
-  }
-
-  // Check Projects
-  if (resumeData.projects && resumeData.projects.length > 0) {
-    score += 10;
-    strengths.push("Projects section included to demonstrate practical applications.");
-  } else {
-    recommendations.push("Add key technical projects to highlight practical accomplishments.");
-  }
-
-  const finalScore = Math.min(Math.max(score, 40), 98);
 
   return {
-    atsScore: finalScore,
+    success: true,
+    atsScore: baseScore,
     strengths,
     weaknesses,
     recommendations,
-    missingKeywords: ["CI/CD", "System Architecture", "Performance Optimization", "Agile/Scrum"],
+    missingKeywords: ["CI/CD Pipeline", "Unit & Integration Testing", "System Architecture", "Performance Optimization", "Clean Code"],
     formattingIssues: [
-      "Ensure font sizes are consistent (10-12pt for body).",
-      "Keep section headers bold and standardized for ATS parsers.",
+      "Ensure font sizes are consistent (10-12pt for body text).",
+      "Keep standard section headings (Summary, Experience, Education, Skills, Projects).",
     ],
+    subScores: {
+      structure: { score: structureScore, max: 25, label: "Structure & Contact", percentage: Math.round((structureScore / 25) * 100) },
+      impact: { score: impactScore, max: 25, label: "Measurable Impact (Metrics)", percentage: Math.round((impactScore / 25) * 100) },
+      actionVerbs: { score: verbScore, max: 25, label: "Action Verbs & Tone", percentage: Math.round((verbScore / 25) * 100) },
+      skills: { score: skillScore, max: 25, label: "Domain Keywords & Skills", percentage: Math.round((skillScore / 25) * 100) },
+    },
+    quantifiedBulletsCount: quantifiedBullets.length,
+    totalBulletsCount: allBullets.length,
+    weakPhrasesFound: weakFound,
   };
 }
 

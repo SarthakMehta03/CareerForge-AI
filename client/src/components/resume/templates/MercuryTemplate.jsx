@@ -31,7 +31,13 @@ export function MercuryTemplate({ resume, highlightKeywords = [], variant = "mer
     projects = [],
     certifications = [],
     languages = [],
+    interests = [],
     awards = [],
+    references = [],
+    declaration = {},
+    publications = [],
+    organizations = [],
+    customSections = [],
     hiddenSections = [],
     sectionOrder = [
       "summary",
@@ -42,6 +48,12 @@ export function MercuryTemplate({ resume, highlightKeywords = [], variant = "mer
       "certifications",
       "languages",
       "awards",
+      "interests",
+      "publications",
+      "organizations",
+      "references",
+      "declaration",
+      "custom",
     ],
     theme = {},
     minPageHeight = 1123,
@@ -223,6 +235,134 @@ export function MercuryTemplate({ resume, highlightKeywords = [], variant = "mer
                 </div>
               ))}
             </div>
+          </div>
+        ) : null;
+
+      case "awards":
+        const activeAwards = (awards || []).filter((a) => !a.hidden);
+        return activeAwards.length > 0 ? (
+          <div key="awards" style={styles.sectionStyle}>
+            <SectionBanner title="Awards & Honors" />
+            <div className="space-y-2 px-1">
+              {activeAwards.map((award) => (
+                <div key={award.id || Math.random()} className="text-xs">
+                  <div className="flex justify-between items-baseline font-bold text-gray-900">
+                    <span>{H(award.title)}</span>
+                    {award.date && <span className="text-[11px] text-gray-400 font-normal">{award.date}</span>}
+                  </div>
+                  {award.issuer && <p className="text-[10.5px] text-gray-500 mt-0.5">{H(award.issuer)}</p>}
+                  {award.description && <p className="text-gray-600 mt-1">{H(award.description)}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+
+      case "interests":
+        const activeInterests = (interests || []).filter((i) => typeof i === "object" ? !i.hidden : true);
+        return activeInterests.length > 0 ? (
+          <div key="interests" style={styles.sectionStyle}>
+            <SectionBanner title="Interests & Hobbies" />
+            <p className="text-xs text-gray-700 px-1">
+              {activeInterests.map((i, idx) => (
+                <React.Fragment key={idx}>{idx > 0 && " • "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>
+              ))}
+            </p>
+          </div>
+        ) : null;
+
+      case "publications":
+        const activePubs = (publications || []).filter((p) => !p.hidden);
+        return activePubs.length > 0 ? (
+          <div key="publications" style={styles.sectionStyle}>
+            <SectionBanner title="Publications" />
+            <div className="space-y-2 px-1">
+              {activePubs.map((pub) => (
+                <div key={pub.id || Math.random()} className="text-xs">
+                  <p className="font-bold text-gray-900">{H(pub.title)}</p>
+                  {pub.publisher && <p className="text-[10.5px] text-gray-500">{H(pub.publisher)}{pub.date ? ` • ${pub.date}` : ""}</p>}
+                  {pub.description && <p className="text-gray-600 mt-1">{H(pub.description)}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+
+      case "organizations":
+        const activeOrgs = (organizations || []).filter((o) => !o.hidden);
+        return activeOrgs.length > 0 ? (
+          <div key="organizations" style={styles.sectionStyle}>
+            <SectionBanner title="Organizations & Volunteering" />
+            <div className="space-y-3 px-1">
+              {activeOrgs.map((org) => (
+                <div key={org.id || Math.random()} className="text-xs">
+                  <div className="flex justify-between items-baseline font-bold text-gray-900">
+                    <span>{H(org.name)}{org.role && <span className="font-normal text-gray-600"> — {H(org.role)}</span>}</span>
+                    {(org.startDate || org.endDate) && (
+                      <span className="text-[11px] text-gray-400 font-normal">{org.startDate}{org.startDate && org.endDate ? " – " : ""}{org.endDate}</span>
+                    )}
+                  </div>
+                  {org.description && <p className="text-gray-600 mt-1 whitespace-pre-line">{H(org.description)}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+
+      case "references":
+        const activeRefs = (references || []).filter((r) => !r.hidden);
+        return activeRefs.length > 0 ? (
+          <div key="references" style={styles.sectionStyle}>
+            <SectionBanner title="References" />
+            <div className="grid grid-cols-2 gap-3 px-1">
+              {activeRefs.map((ref) => (
+                <div key={ref.id || Math.random()} className="text-xs bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                  <p className="font-bold text-gray-900">{H(ref.name)}</p>
+                  {ref.relationship && <p className="text-[10.5px] text-gray-500">{ref.relationship}</p>}
+                  {ref.company && <p className="text-[10.5px] text-gray-600 font-medium">{ref.company}</p>}
+                  {ref.email && <p className="text-[10.5px] text-gray-500">{ref.email}</p>}
+                  {ref.phone && <p className="text-[10.5px] text-gray-500">{ref.phone}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+
+      case "declaration":
+        return declaration && declaration.statement && isVisible("declaration") ? (
+          <div key="declaration" style={styles.sectionStyle}>
+            <SectionBanner title="Declaration" />
+            <div className="px-1">
+              <p className="text-xs text-gray-700 italic whitespace-pre-line">{H(declaration.statement)}</p>
+              <div className="flex justify-between items-center mt-3 text-xs text-gray-600">
+                {declaration.place && <span>{declaration.place}</span>}
+                {declaration.date && <span>{declaration.date}</span>}
+              </div>
+              {declaration.signatureName && <p className="text-xs font-bold text-gray-900 mt-2">{declaration.signatureName}</p>}
+            </div>
+          </div>
+        ) : null;
+
+      case "custom":
+        return customSections && customSections.length > 0 ? (
+          <div key="custom" className="space-y-4">
+            {customSections.map((cSec) => (
+              <div key={cSec.id} style={styles.sectionStyle}>
+                <SectionBanner title={cSec.title || "Custom Section"} />
+                <div className="space-y-2 px-1">
+                  {(cSec.items || []).map((item) => (
+                    <div key={item.id || Math.random()} className="text-xs">
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-bold text-gray-900">{H(item.title)}</span>
+                        {item.date && <span className="text-[11px] text-gray-400">{item.date}</span>}
+                      </div>
+                      {item.subtitle && <p className="text-[10.5px] text-gray-600 font-medium">{H(item.subtitle)}</p>}
+                      {item.description && <p className="text-gray-600 mt-1 whitespace-pre-line">{H(item.description)}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : null;
 

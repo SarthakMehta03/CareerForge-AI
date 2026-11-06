@@ -29,6 +29,204 @@ import { useResume } from "../../../context/ResumeContext";
 
 const A4_HEIGHT_PX = 1123; // Standard A4 height at 96 DPI CSS pixels
 
+/**
+ * Extracts potential clean page break boundaries from the rendered template probe.
+ * Candidates include:
+ *  - Section headings (.resume-heading-block, h1, h2, h3, [role="heading"])
+ *  - Individual entries (.resume-entry, [data-entry-id], direct children of section entry containers)
+ *  - Paragraphs & bullet list items (<p>, <li>)
+ */
+function getBreakCandidates(probe) {
+  if (!probe) return [];
+  const probeRect = probe.getBoundingClientRect();
+  const candidates = [];
+  const seenElements = new Set();
+
+  // 1. Section headings
+  const headings = probe.querySelectorAll(".resume-heading-block, h1, h2, h3, [role='heading']");
+  headings.forEach((el) => {
+    if (seenElements.has(el)) return;
+    const rect = el.getBoundingClientRect();
+    const top = rect.top - probeRect.top;
+    const bottom = rect.bottom - probeRect.top;
+    if (rect.height > 6) {
+      seenElements.add(el);
+      candidates.push({
+        type: "heading",
+        top: Math.round(top),
+        bottom: Math.round(bottom),
+        height: Math.round(rect.height),
+        el,
+      });
+    }
+  });
+
+  // 2. Entries (direct children of section lists, items with .resume-entry)
+  const entrySelectors = [
+    ".resume-entry",
+    "[data-entry-id]",
+    ".space-y-4 > div",
+    ".space-y-3 > div",
+    ".space-y-2 > div",
+    ".space-y-2\\.5 > div",
+    ".space-y-1\\.5 > div",
+    ".space-y-5 > div",
+    ".space-y-6 > div",
+  ];
+  const entries = probe.querySelectorAll(entrySelectors.join(", "));
+  entries.forEach((el) => {
+    if (seenElements.has(el)) return;
+    // Exclude headings or section containers that hold headings or other entries
+    if (
+      el.classList.contains("resume-heading-block") ||
+      el.querySelector(".resume-heading-block, h1, h2, h3, .resume-entry") ||
+      el.offsetHeight > 750
+    ) {
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    const top = rect.top - probeRect.top;
+    const bottom = rect.bottom - probeRect.top;
+    if (rect.height > 10) {
+      seenElements.add(el);
+      candidates.push({
+        type: "entry",
+        top: Math.round(top),
+        bottom: Math.round(bottom),
+        height: Math.round(rect.height),
+        el,
+      });
+    }
+  });
+
+  // 3. Bullet points and standalone paragraphs
+  const bullets = probe.querySelectorAll("li, p");
+  bullets.forEach((el) => {
+    if (seenElements.has(el)) return;
+    if (el.closest(".resume-heading-block")) return;
+    if (el.querySelector(".resume-heading-block, h1, h2, h3, .resume-entry")) return;
+    const rect = el.getBoundingClientRect();
+    const top = rect.top - probeRect.top;
+    const bottom = rect.bottom - probeRect.top;
+    if (rect.height > 10 && rect.height < 320) {
+      seenElements.add(el);
+      candidates.push({
+        type: "bullet",
+        top: Math.round(top),
+        bottom: Math.round(bottom),
+        height: Math.round(rect.height),
+        el,
+      });
+    }
+  });
+
+  candidates.sort((a, b) => a.top - b.top);
+  return candidates;
+}
+
+/**
+ * Calculates smart, professional page break offsets.
+ * Guarantees:
+ *  1. No entry is cut in half across a page boundary.
+ *  2. No lines of text have characters split horizontally.
+ *  3. No orphan headings (headings left alone at page bottom with no content below).
+ */
+function calculateSmartPageOffsets(probe, resume) {
+  if (!probe) return [0];
+
+  const totalHeight = probe.scrollHeight;
+  if (totalHeight <= A4_HEIGHT_PX + 4) {
+    return [0];
+  }
+
+  const isFullBleedSidebar = ["atlantic-blue", "hunter-green", "sidebar"].includes(resume?.template);
+  const pageTopMargin = isFullBleedSidebar ? 0 : 24;
+  const pageBottomMargin = 32;
+
+  const candidates = getBreakCandidates(probe);
+  const offsets = [0];
+  let currentStart = 0;
+  let pageIndex = 0;
+
+  while (currentStart < totalHeight - 4) {
+    // Usable height on current page
+    const availableH = pageIndex === 0
+      ? A4_HEIGHT_PX - pageBottomMargin
+      : A4_HEIGHT_PX - pageTopMargin - pageBottomMargin;
+
+    const targetEnd = currentStart + availableH;
+    const hardLimit = currentStart + availableH + pageBottomMargin; // sheet physical boundary
+
+    // If remaining content comfortably fits on this page:
+    if (totalHeight <= hardLimit + 4) {
+      break;
+    }
+
+    let bestBreak = null;
+
+    // Rule 1: Check for orphan headings near bottom of page (within 85px of targetEnd)
+    for (const item of candidates) {
+      if (item.top <= currentStart + 50) continue;
+      if (item.type === "heading" && item.top >= targetEnd - 85 && item.top <= hardLimit) {
+        bestBreak = item.top;
+        break;
+      }
+    }
+
+    // Rule 2: Check for elements that straddle the targetEnd boundary (cut in half)
+    if (bestBreak === null) {
+      for (const item of candidates) {
+        if (item.top <= currentStart + 50) continue;
+        if (item.top < targetEnd && item.bottom > targetEnd) {
+          // If this is the FIRST entry under a section heading within 75px, break before the heading to avoid orphaning it
+          const prevHeading = candidates.find(
+            (c) => c.type === "heading" && c.top >= item.top - 75 && c.top < item.top
+          );
+          const anyEntryBetween = candidates.some(
+            (c) => c.type === "entry" && c.top > (prevHeading?.top || 0) && c.top < item.top
+          );
+          if (prevHeading && !anyEntryBetween && prevHeading.top > currentStart + 50) {
+            bestBreak = prevHeading.top;
+          } else {
+            bestBreak = item.top;
+          }
+          break;
+        }
+      }
+    }
+
+    // Rule 3: If no straddler found, find the last candidate that cleanly finishes before targetEnd
+    if (bestBreak === null) {
+      const validBefore = candidates.filter(
+        (c) => c.bottom <= targetEnd && c.bottom > currentStart + 80
+      );
+      if (validBefore.length > 0) {
+        const lastCandidate = validBefore[validBefore.length - 1];
+        const nextCandidate = candidates.find((c) => c.top >= lastCandidate.bottom);
+        bestBreak = nextCandidate ? nextCandidate.top : lastCandidate.bottom;
+      } else {
+        bestBreak = targetEnd;
+      }
+    }
+
+    // Safety checks:
+    if (bestBreak <= currentStart + 120) {
+      bestBreak = targetEnd;
+    }
+    if (bestBreak > hardLimit) {
+      bestBreak = hardLimit;
+    }
+
+    offsets.push(bestBreak);
+    currentStart = bestBreak;
+    pageIndex++;
+
+    if (pageIndex > 8) break; // safety guard
+  }
+
+  return offsets;
+}
+
 export function ResumePreview({ resume }) {
   const {
     highlightKeywords = [],
@@ -63,8 +261,8 @@ export function ResumePreview({ resume }) {
       const overPx = Math.max(0, realH - A4_HEIGHT_PX);
       const lines = Math.max(1, Math.ceil(overPx / 20));
 
-      const computedPages = Math.max(1, Math.ceil((realH - 4) / A4_HEIGHT_PX));
-      const offsets = Array.from({ length: computedPages }).map((_, i) => i * A4_HEIGHT_PX);
+      const offsets = calculateSmartPageOffsets(probe, resume);
+      const computedPages = offsets.length;
       setPageOffsets(offsets);
 
       setOverflowStats({
@@ -77,6 +275,12 @@ export function ResumePreview({ resume }) {
 
     measureSheet();
     const timer = setTimeout(measureSheet, 120);
+
+    // Re-measure when document fonts are fully loaded to guarantee subpixel precision
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(measureSheet).catch(() => {});
+    }
+
     return () => clearTimeout(timer);
   }, [resume, zoom]);
 
@@ -363,7 +567,17 @@ export function ResumePreview({ resume }) {
             {Array.from({ length: totalPages }).map((_, pageIndex) => {
               const startOffset = pageOffsets[pageIndex] ?? pageIndex * A4_HEIGHT_PX;
               const nextOffset = pageOffsets[pageIndex + 1];
-              const sliceHeight = nextOffset != null ? Math.min(A4_HEIGHT_PX, nextOffset - startOffset) : A4_HEIGHT_PX;
+              const isFullBleedSidebar = ["atlantic-blue", "hunter-green", "sidebar"].includes(resume?.template);
+              const sheetTopPadding = (!isFullBleedSidebar && pageIndex > 0) ? 24 : 0;
+              const maxAvailableHeight = A4_HEIGHT_PX - sheetTopPadding;
+
+              let sliceHeight;
+              if (nextOffset != null) {
+                sliceHeight = Math.min(maxAvailableHeight, nextOffset - startOffset);
+              } else {
+                const remaining = Math.max(0, contentHeight - startOffset);
+                sliceHeight = Math.min(maxAvailableHeight, Math.max(200, remaining));
+              }
 
               return (
                 <div
@@ -373,12 +587,15 @@ export function ResumePreview({ resume }) {
                   style={{
                     height: `${A4_HEIGHT_PX}px`,
                     maxHeight: `${A4_HEIGHT_PX}px`,
+                    paddingTop: `${sheetTopPadding}px`,
+                    boxSizing: "border-box",
                   }}
                 >
-                  {/* Sliced Content Window for this page - strictly clipped so pushed content never repeats on prior page */}
+                  {/* Sliced Content Window: strictly 0 padding so negative margin can never peek prior page content */}
                   <div
                     style={{
                       height: `${sliceHeight}px`,
+                      maxHeight: `${maxAvailableHeight}px`,
                       overflow: "hidden",
                     }}
                     className="w-[794px]"
@@ -460,7 +677,17 @@ export function ResumePreview({ resume }) {
               {Array.from({ length: totalPages }).map((_, pageIndex) => {
                 const startOffset = pageOffsets[pageIndex] ?? pageIndex * A4_HEIGHT_PX;
                 const nextOffset = pageOffsets[pageIndex + 1];
-                const sliceHeight = nextOffset != null ? Math.min(A4_HEIGHT_PX, nextOffset - startOffset) : A4_HEIGHT_PX;
+                const isFullBleedSidebar = ["atlantic-blue", "hunter-green", "sidebar"].includes(resume?.template);
+                const sheetTopPadding = (!isFullBleedSidebar && pageIndex > 0) ? 24 : 0;
+                const maxAvailableHeight = A4_HEIGHT_PX - sheetTopPadding;
+
+                let sliceHeight;
+                if (nextOffset != null) {
+                  sliceHeight = Math.min(maxAvailableHeight, nextOffset - startOffset);
+                } else {
+                  const remaining = Math.max(0, contentHeight - startOffset);
+                  sliceHeight = Math.min(maxAvailableHeight, Math.max(200, remaining));
+                }
 
                 return (
                   <div
@@ -469,11 +696,14 @@ export function ResumePreview({ resume }) {
                     style={{
                       height: `${A4_HEIGHT_PX}px`,
                       maxHeight: `${A4_HEIGHT_PX}px`,
+                      paddingTop: `${sheetTopPadding}px`,
+                      boxSizing: "border-box",
                     }}
                   >
                     <div
                       style={{
                         height: `${sliceHeight}px`,
+                        maxHeight: `${maxAvailableHeight}px`,
                         overflow: "hidden",
                       }}
                       className="w-[794px]"

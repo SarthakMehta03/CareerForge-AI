@@ -446,7 +446,7 @@ export function ProfessionalTemplate({ resume, highlightKeywords = [] }) {
               headingBorderColor={headingBorderColor}
             />
             <p className="text-xs text-gray-700">
-              {activeInt.map((i) => H(typeof i === "object" ? i.name : i)).reduce((prev, curr) => [prev, " • ", curr])}
+              {activeInt.map((i, idx) => (<React.Fragment key={idx}>{idx > 0 && " • "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>))}
             </p>
           </div>
         ) : null;

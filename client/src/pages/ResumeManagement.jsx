@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -31,285 +31,122 @@ import ImportResumeModal from "../components/resume/modals/ImportResumeModal";
 import ExportResumeModal from "../components/resume/modals/ExportResumeModal";
 import ShareResumeModal from "../components/resume/modals/ShareResumeModal";
 import { exportResumeBackup } from "../utils/resumeParser";
+import ModernTemplate from "../components/resume/templates/ModernTemplate";
+import ClassicTemplate from "../components/resume/templates/ClassicTemplate";
+import MinimalTemplate from "../components/resume/templates/MinimalTemplate";
+import ProfessionalTemplate from "../components/resume/templates/ProfessionalTemplate";
+import SidebarTemplate from "../components/resume/templates/SidebarTemplate";
+import AtlanticTemplate from "../components/resume/templates/AtlanticTemplate";
+import CobaltTemplate from "../components/resume/templates/CobaltTemplate";
+import MercuryTemplate from "../components/resume/templates/MercuryTemplate";
+import SaffronTemplate from "../components/resume/templates/SaffronTemplate";
+import EditorialTemplate from "../components/resume/templates/EditorialTemplate";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 
 // ──────────────────────────────────────────────
-// Mini resume thumbnails (one per template)
+// Live Resume Thumbnail (Renders full live resume scaled down)
 // ──────────────────────────────────────────────
-function MiniModernPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white p-2.5 text-[3.5px] leading-[1.4] font-sans overflow-hidden">
-      <div className="border-b border-gray-800 pb-1 mb-1">
-        <div className="text-[6px] font-bold text-gray-900 uppercase tracking-wide">
-          {personalInfo?.fullName || "Your Name"}
-        </div>
-        <div className="text-[3.5px] text-gray-600 mt-0.5">
-          {personalInfo?.jobTitle || "Professional Title"}
-        </div>
-        <div className="flex gap-1 mt-0.5 text-[3px] text-gray-500">
-          {personalInfo?.email && <span>{personalInfo.email}</span>}
-          {personalInfo?.phone && <span>{personalInfo.phone}</span>}
-        </div>
-      </div>
-      {resume.summary && (
-        <div className="mb-1">
-          <div className="text-[3.5px] font-bold text-gray-800 uppercase mb-0.5">Summary</div>
-          <div className="text-gray-600 line-clamp-2">{resume.summary}</div>
-        </div>
-      )}
-      {resume.experience?.length > 0 && (
-        <div className="mb-1">
-          <div className="text-[3.5px] font-bold text-gray-800 uppercase mb-0.5">Experience</div>
-          {resume.experience.slice(0, 2).map((exp, i) => (
-            <div key={i} className="mb-0.5">
-              <div className="font-semibold text-gray-800">{exp.jobTitle || "Job Title"}</div>
-              <div className="text-gray-500">{exp.company || "Company"}</div>
-              <div className="h-[1.5px] bg-gray-100 rounded mt-0.5 w-3/4" />
-            </div>
-          ))}
-        </div>
-      )}
-      {resume.education?.length > 0 && (
-        <div className="mb-1">
-          <div className="text-[3.5px] font-bold text-gray-800 uppercase mb-0.5">Education</div>
-          {resume.education.slice(0, 1).map((edu, i) => (
-            <div key={i}>
-              <div className="font-semibold text-gray-800">{edu.degree || "Degree"}</div>
-              <div className="text-gray-500">{edu.institution || "Institution"}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {resume.skills?.length > 0 && (
-        <div>
-          <div className="text-[3.5px] font-bold text-gray-800 uppercase mb-0.5">Skills</div>
-          <div className="flex flex-wrap gap-0.5">
-            {resume.skills.slice(0, 5).map((skill, i) => (
-              <span key={i} className="bg-gray-100 text-gray-700 px-0.5 py-[0.5px] rounded text-[3px]">
-                {skill.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MiniClassicPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white p-2.5 text-[3.5px] leading-[1.4] font-serif overflow-hidden">
-      <div className="text-center pb-1 mb-1 border-b border-gray-300">
-        <div className="text-[6px] font-bold text-gray-900">
-          {personalInfo?.fullName || "Your Name"}
-        </div>
-        <div className="text-[3.5px] text-gray-600 mt-0.5">
-          {personalInfo?.jobTitle || "Professional Title"}
-        </div>
-        <div className="flex justify-center gap-1 mt-0.5 text-[3px] text-gray-500">
-          {personalInfo?.email && <span>{personalInfo.email}</span>}
-          {personalInfo?.phone && <span>• {personalInfo.phone}</span>}
-        </div>
-      </div>
-      {resume.experience?.length > 0 && (
-        <div className="mb-1">
-          <div className="text-[3.5px] font-bold text-gray-800 border-b border-gray-200 pb-0.5 mb-0.5">EXPERIENCE</div>
-          {resume.experience.slice(0, 2).map((exp, i) => (
-            <div key={i} className="mb-0.5">
-              <div className="font-semibold text-gray-800">{exp.jobTitle}</div>
-              <div className="text-gray-500">{exp.company}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="space-y-0.5 mt-1">
-        <div className="h-[1.5px] bg-gray-100 rounded w-full" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-4/5" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-3/5" />
-      </div>
-    </div>
-  );
-}
-
-function MiniMinimalPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white p-2.5 text-[3.5px] leading-[1.4] font-sans overflow-hidden">
-      <div className="pb-1 mb-1">
-        <div className="text-[6.5px] font-light text-gray-900 tracking-widest uppercase">
-          {personalInfo?.fullName || "Your Name"}
-        </div>
-        <div className="text-[3.5px] text-gray-500 mt-0.5 tracking-wider">
-          {personalInfo?.jobTitle || "Professional Title"}
-        </div>
-      </div>
-      <div className="h-[0.5px] bg-gray-200 mb-1" />
-      <div className="space-y-0.5">
-        <div className="h-[1.5px] bg-gray-100 rounded w-full" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-5/6" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-4/6" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-full mt-1" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-3/4" />
-        <div className="h-[1.5px] bg-gray-100 rounded w-2/3" />
-      </div>
-    </div>
-  );
-}
-
-function MiniProfessionalPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white flex overflow-hidden">
-      <div className="w-[30%] bg-gray-800 p-1.5 text-white text-[3px] leading-[1.4]">
-        <div className="text-[4px] font-bold mb-0.5">{personalInfo?.fullName || "Your Name"}</div>
-        <div className="text-[2.5px] text-gray-300 mb-1">{personalInfo?.jobTitle || "Title"}</div>
-        <div className="space-y-0.5">
-          <div className="h-[1.5px] bg-gray-600 rounded w-full" />
-          <div className="h-[1.5px] bg-gray-600 rounded w-4/5" />
-          <div className="h-[1.5px] bg-gray-600 rounded w-3/5" />
-        </div>
-      </div>
-      <div className="flex-1 p-1.5 text-[3px] leading-[1.4]">
-        <div className="space-y-0.5">
-          <div className="h-[1.5px] bg-gray-100 rounded w-full" />
-          <div className="h-[1.5px] bg-gray-100 rounded w-5/6" />
-          <div className="h-[1.5px] bg-gray-100 rounded w-4/6" />
-          <div className="h-[1.5px] bg-gray-100 rounded w-full mt-1" />
-          <div className="h-[1.5px] bg-gray-100 rounded w-3/4" />
-          <div className="h-[1.5px] bg-gray-100 rounded w-2/3" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniAtlanticPreview({ resume, bg = "#1E293B" }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white flex overflow-hidden">
-      <div className="w-[32%] p-1 text-white text-[3px] leading-[1.3] flex flex-col justify-between" style={{ backgroundColor: bg }}>
-        <div>
-          <div className="w-3.5 h-3.5 rounded-full bg-white/20 mx-auto mb-0.5 flex items-center justify-center text-[3px] font-bold">
-            {(personalInfo?.fullName || "A")[0]}
-          </div>
-          <div className="text-[3.5px] font-bold text-center truncate">{personalInfo?.fullName || "Name"}</div>
-          <div className="text-[2.2px] text-white/70 text-center truncate">{personalInfo?.jobTitle || "Title"}</div>
-        </div>
-        <div className="space-y-0.5">
-          <div className="h-[1px] bg-white/30 rounded w-full" />
-          <div className="h-[1px] bg-white/30 rounded w-3/4" />
-        </div>
-      </div>
-      <div className="flex-1 p-1.5 text-[3px] leading-[1.3] space-y-1">
-        <div className="border-b border-gray-200 pb-0.5 font-bold text-[3px] text-gray-800">EXPERIENCE</div>
-        <div className="space-y-0.5">
-          <div className="h-[1px] bg-gray-200 rounded w-full" />
-          <div className="h-[1px] bg-gray-200 rounded w-4/5" />
-          <div className="h-[1px] bg-gray-200 rounded w-3/5" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniCobaltPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white flex flex-col overflow-hidden text-[3px]">
-      <div className="bg-[#0B3B60] text-white p-1 flex justify-between items-center">
-        <div>
-          <div className="text-[3.5px] font-bold">{personalInfo?.fullName || "Name"}</div>
-          <div className="text-[2.2px] text-white/70">{personalInfo?.jobTitle || "Title"}</div>
-        </div>
-        <div className="w-3 h-3 rounded-full bg-white/20 flex items-center justify-center text-[2.5px] font-bold">
-          {(personalInfo?.fullName || "A")[0]}
-        </div>
-      </div>
-      <div className="p-1.5 flex-1 space-y-1">
-        <div className="h-[1px] bg-gray-200 rounded w-full" />
-        <div className="h-[1px] bg-gray-200 rounded w-5/6" />
-        <div className="h-[1px] bg-gray-200 rounded w-2/3" />
-      </div>
-    </div>
-  );
-}
-
-function MiniMercuryPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white p-1.5 text-[3px] leading-[1.3] overflow-hidden space-y-1">
-      <div className="border-b border-gray-200 pb-0.5">
-        <div className="text-[4px] font-bold text-gray-900">{personalInfo?.fullName || "Name"}</div>
-        <div className="text-[2.5px] text-gray-500">{personalInfo?.jobTitle || "Title"}</div>
-      </div>
-      <div className="bg-gray-100 text-gray-800 px-1 py-[0.5px] rounded text-[2.5px] font-bold">
-        EXPERIENCE
-      </div>
-      <div className="space-y-0.5">
-        <div className="h-[1px] bg-gray-200 rounded w-full" />
-        <div className="h-[1px] bg-gray-200 rounded w-4/5" />
-      </div>
-    </div>
-  );
-}
-
-function MiniSaffronPreview({ resume }) {
-  const { personalInfo } = resume;
-  return (
-    <div className="w-full h-full bg-white p-1.5 text-[3px] leading-[1.3] overflow-hidden space-y-1">
-      <div className="border-b border-amber-600 pb-0.5">
-        <div className="text-[4px] font-serif font-bold text-gray-900">{personalInfo?.fullName || "Name"}</div>
-        <div className="text-[2.5px] text-amber-700">{personalInfo?.jobTitle || "Title"}</div>
-      </div>
-      <div className="grid grid-cols-12 gap-1">
-        <div className="col-span-4 border-r border-gray-100 pr-0.5">
-          <div className="h-[1px] bg-amber-600 rounded w-full mb-0.5" />
-          <div className="h-[1px] bg-gray-200 rounded w-full" />
-        </div>
-        <div className="col-span-8 space-y-0.5">
-          <div className="h-[1px] bg-gray-200 rounded w-full" />
-          <div className="h-[1px] bg-gray-200 rounded w-4/5" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MiniResumePreview({ resume }) {
-  switch (resume?.template) {
-    case "atlantic-blue":
-      return <MiniAtlanticPreview resume={resume} bg="#1E293B" />;
-    case "hunter-green":
-      return <MiniAtlanticPreview resume={resume} bg="#23372F" />;
-    case "quicksilver":
-      return <MiniAtlanticPreview resume={resume} bg="#64748B" />;
-    case "cobalt-edge":
-      return <MiniCobaltPreview resume={resume} />;
-    case "mercury-flow":
-    case "steady-form":
-    case "silver-banner":
-      return <MiniMercuryPreview resume={resume} />;
-    case "saffron-line":
-      return <MiniSaffronPreview resume={resume} />;
-    case "classic":
-    case "classic-clear":
-    case "classic-serif":
-    case "editorial-rule":
-      return <MiniClassicPreview resume={resume} />;
-    case "minimal":
-    case "precision-line":
-    case "condensed-rule":
-      return <MiniMinimalPreview resume={resume} />;
-    case "professional":
-    case "refined":
-      return <MiniProfessionalPreview resume={resume} />;
-    case "sidebar":
-    case "true-blue":
-    case "modern":
-    default:
-      return <MiniModernPreview resume={resume} />;
-  }
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(0.28);
+
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      const w = containerRef.current.getBoundingClientRect().width;
+      if (w > 0) setScale(w / 794);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const updateScale = () => {
+      const w = el.getBoundingClientRect().width;
+      if (w > 0) setScale(w / 794);
+    };
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  if (!resume) return null;
+
+  const resumeForRender = {
+    ...resume,
+    minPageHeight: 1123,
+    theme: resume.theme || {},
+    personalInfo: resume.personalInfo || {},
+  };
+
+  const renderTemplate = () => {
+    switch (resume.template) {
+      // FlowCV Templates
+      case "atlantic-blue":
+        return <AtlanticTemplate resume={resumeForRender} variant="atlantic" />;
+      case "hunter-green":
+        return <AtlanticTemplate resume={resumeForRender} variant="hunter" />;
+      case "quicksilver":
+        return <AtlanticTemplate resume={resumeForRender} variant="quicksilver" />;
+      case "cobalt-edge":
+        return <CobaltTemplate resume={resumeForRender} />;
+      case "mercury-flow":
+        return <MercuryTemplate resume={resumeForRender} variant="mercury" />;
+      case "steady-form":
+        return <MercuryTemplate resume={resumeForRender} variant="steady" />;
+      case "silver-banner":
+        return <MercuryTemplate resume={resumeForRender} variant="silver" />;
+      case "saffron-line":
+        return <SaffronTemplate resume={resumeForRender} />;
+      case "classic-clear":
+        return <EditorialTemplate resume={resumeForRender} variant="classic-clear" />;
+      case "editorial-rule":
+        return <EditorialTemplate resume={resumeForRender} variant="editorial-rule" />;
+      case "classic-serif":
+        return <EditorialTemplate resume={resumeForRender} variant="classic-serif" />;
+
+      // Built-in Templates
+      case "sidebar":
+        return <SidebarTemplate resume={resumeForRender} />;
+      case "classic":
+        return <ClassicTemplate resume={resumeForRender} />;
+      case "minimal":
+      case "precision-line":
+      case "condensed-rule":
+        return <MinimalTemplate resume={resumeForRender} />;
+      case "professional":
+      case "refined":
+        return <ProfessionalTemplate resume={resumeForRender} />;
+      case "modern":
+      case "true-blue":
+      default:
+        if (resume.theme?.columns === "two") {
+          return <SidebarTemplate resume={resumeForRender} />;
+        }
+        return <ModernTemplate resume={resumeForRender} />;
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full h-full overflow-hidden bg-white select-none pointer-events-none"
+    >
+      <div
+        style={{
+          width: "794px",
+          height: "1123px",
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+        className="absolute top-0 left-0 bg-white origin-top-left overflow-hidden shadow-none"
+      >
+        <ErrorBoundary fallback={<div className="p-8 text-sm text-gray-400">Preview unavailable</div>}>
+          {renderTemplate()}
+        </ErrorBoundary>
+      </div>
+    </div>
+  );
 }
 
 // ──────────────────────────────────────────────
@@ -596,7 +433,7 @@ export function ResumeManagement() {
           }>
             {[1, 2, 3, 4].map((i) => (
               <div key={i}>
-                <div className={`bg-white rounded-xl border border-gray-200 animate-pulse ${viewMode === "grid" ? "aspect-[3/4]" : "h-16"}`} />
+                <div className={`bg-white rounded-xl border border-gray-200 animate-pulse ${viewMode === "grid" ? "aspect-[210/297]" : "h-16"}`} />
                 {viewMode === "grid" && <div className="h-10 mt-2" />}
               </div>
             ))}
@@ -608,7 +445,7 @@ export function ResumeManagement() {
             <div>
               <button
                 onClick={handleCreateNew}
-                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[3/4]"
+                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[210/297]"
               >
                 <Plus size={20} className="text-gray-400 group-hover:text-black transition-colors mb-1.5" />
                 <span className="text-sm text-gray-500 group-hover:text-black font-medium transition-colors">
@@ -624,7 +461,7 @@ export function ResumeManagement() {
             <div>
               <button
                 onClick={handleCreateNew}
-                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[3/4]"
+                className="group w-full bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer aspect-[210/297]"
               >
                 <Plus size={20} className="text-gray-400 group-hover:text-black transition-colors mb-1.5" />
                 <span className="text-sm text-gray-500 group-hover:text-black font-medium transition-colors">
@@ -639,10 +476,17 @@ export function ResumeManagement() {
                 {/* Thumbnail card */}
                 <div
                   onClick={() => navigate(`/resume/${res._id}/edit`)}
-                  className="group bg-white rounded-xl border border-gray-200 hover:border-gray-400 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden aspect-[3/4]"
+                  className="group relative bg-white rounded-xl border border-gray-200 hover:border-gray-400 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden aspect-[210/297]"
                 >
                   <div className="w-full h-full">
                     <MiniResumePreview resume={res} />
+                  </div>
+                  {/* Hover overlay with edit indicator */}
+                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <span className="bg-white/95 text-gray-900 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                      <Edit3 size={13} />
+                      Edit Resume
+                    </span>
                   </div>
                 </div>
 
@@ -685,39 +529,21 @@ export function ResumeManagement() {
         ) : (
           /* ── List View ── */
           <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {/* New resume row */}
-              <button
-                onClick={handleCreateNew}
-                className="group flex items-center gap-4 bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl px-4 py-3 transition-all cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
-                  <Plus size={18} className="text-gray-400 group-hover:text-black transition-colors" />
-                </div>
-                <div className="text-left">
-                  <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors block">
-                    New resume
-                  </span>
-                  <span className="text-xs text-gray-400">Start from a blank canvas</span>
-                </div>
-              </button>
-
-              {/* Import resume row */}
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="group flex items-center gap-4 bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl px-4 py-3 transition-all cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
-                  <Upload size={18} className="text-gray-400 group-hover:text-black transition-colors" />
-                </div>
-                <div className="text-left">
-                  <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors block">
-                    Import resume
-                  </span>
-                  <span className="text-xs text-gray-400">Upload PDF or JSON backup</span>
-                </div>
-              </button>
-            </div>
+            {/* New resume row */}
+            <button
+              onClick={handleCreateNew}
+              className="group flex items-center gap-4 bg-transparent border-2 border-dashed border-gray-300 hover:border-black rounded-xl px-4 py-3 transition-all cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
+                <Plus size={18} className="text-gray-400 group-hover:text-black transition-colors" />
+              </div>
+              <div className="text-left">
+                <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors block">
+                  New resume
+                </span>
+                <span className="text-xs text-gray-400">Start from a blank canvas</span>
+              </div>
+            </button>
 
             {/* Resume Rows */}
             {filteredResumes.map((res) => (

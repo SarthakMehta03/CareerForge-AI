@@ -6,6 +6,19 @@ input::-ms-clear {
   display: none;
 }
 
+/* Professional resume entry & heading page break rules */
+.resume-entry {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+.resume-heading-block {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  break-after: avoid !important;
+  page-break-after: avoid !important;
+}
+
 /* Print styling for resume PDF export and browser print */
 @page {
   size: A4 portrait;
@@ -97,7 +110,7 @@ input::-ms-clear {
     height: 297mm !important;
     max-height: 297mm !important;
     margin: 0 !important;
-    padding: 0 !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;

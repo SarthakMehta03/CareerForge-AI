@@ -1,5 +1,18 @@
 import React, { useState } from "react";
-import { Plus, X, Sparkles, RefreshCw, Layers, ChevronDown } from "lucide-react";
+import {
+  Plus,
+  X,
+  Sparkles,
+  RefreshCw,
+  Layers,
+  ChevronDown,
+  AlignLeft,
+  Tag,
+  CircleDot,
+  BarChart2,
+  Check,
+  Wand2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useResume } from "../../../context/ResumeContext";
 import { suggestSkills } from "../../../services/resumeService";
@@ -17,9 +30,16 @@ const PROFICIENCY_LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"];
 
 export function SkillsEditor() {
   const { resume, setResume } = useResume();
-  const skills = resume.skills || [];
+  const rawSkills = resume.skills || [];
+  // Normalize skills so every item is consistently an object
+  const skills = rawSkills.map((s, idx) =>
+    typeof s === "object" && s !== null
+      ? s
+      : { id: `skill_${idx}`, name: String(s || ""), category: "Technical", level: "Intermediate" }
+  );
   const theme = resume.theme || {};
   const isCategorized = theme.skillGrouping === "categorized" || theme.groupSkillsByCategory;
+  const currentStyle = theme.skillDisplay || theme.skillStyle || "inline";
 
   const [newSkill, setNewSkill] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Languages");
@@ -31,11 +51,59 @@ export function SkillsEditor() {
 
   const activeCategory = isCustomCat && customCategory.trim() ? customCategory.trim() : selectedCategory;
 
+  // Check if skills have embedded category prefixes (e.g. "Programming Languages: Dart")
+  const hasColonPrefixes = skills.some((s) => /^[^:]{2,35}:\s*.+$/.test(s.name || ""));
+
+  const handleSetStyle = (styleKey) => {
+    setResume((prev) => ({
+      ...prev,
+      theme: {
+        ...(prev.theme || {}),
+        skillDisplay: styleKey,
+        skillStyle: styleKey,
+      },
+    }));
+    toast.success(`Skill format set to ${styleKey}`);
+  };
+
+  const handleAutoOrganizeSkills = () => {
+    let activeCat = "Technical Skills";
+    const cleaned = [];
+
+    skills.forEach((s, idx) => {
+      const rawName = s.name || "";
+      const match = rawName.match(/^([^:]{2,35}):\s*(.+)$/);
+      let skillName = rawName.trim();
+      if (match) {
+        activeCat = match[1].trim();
+        skillName = match[2].trim();
+      }
+      cleaned.push({
+        id: s.id || `skill_${Date.now()}_${idx}`,
+        name: skillName,
+        category: activeCat,
+        level: s.level || "Intermediate",
+      });
+    });
+
+    setResume((prev) => ({
+      ...prev,
+      skills: cleaned,
+      theme: {
+        ...(prev.theme || {}),
+        skillGrouping: "categorized",
+        groupSkillsByCategory: true,
+        skillDisplay: prev.theme?.skillDisplay || "inline",
+      },
+    }));
+    toast.success("Skills organized into clean categories!");
+  };
+
   const handleAddSkill = (skillName, categoryOverride) => {
     const name = skillName || newSkill.trim();
     if (!name) return;
 
-    if (skills.some((s) => s.name.toLowerCase() === name.toLowerCase())) {
+    if (skills.some((s) => (s.name || "").toLowerCase() === name.toLowerCase())) {
       toast.error("Skill already added!");
       return;
     }
@@ -55,7 +123,10 @@ export function SkillsEditor() {
   const handleRemoveSkill = (id) => {
     setResume((prev) => ({
       ...prev,
-      skills: (prev.skills || []).filter((s) => s.id !== id),
+      skills: (prev.skills || []).filter((s) => {
+        if (typeof s === "object" && s !== null) return s.id !== id;
+        return String(s) !== id;
+      }),
     }));
   };
 
@@ -101,12 +172,34 @@ export function SkillsEditor() {
     }
   };
 
-  // Group skills by category for preview
+  // Group skills by category for preview / editor
   const groupedSkills = {};
+  let currentDetectedCategory = "Technical Skills";
+
   skills.forEach((s) => {
-    const cat = s.category && s.category.trim() ? s.category.trim() : "Other / Core";
+    const rawName = s.name || "";
+    const match = rawName.match(/^([^:]{2,35}):\s*(.+)$/);
+    let skillName = rawName.trim();
+    let cat = s.category && s.category.trim() && s.category !== "Technical" && s.category !== "Other / Core"
+      ? s.category.trim()
+      : null;
+
+    if (match) {
+      currentDetectedCategory = match[1].trim();
+      skillName = match[2].trim();
+      cat = currentDetectedCategory;
+    } else if (hasColonPrefixes) {
+      cat = currentDetectedCategory;
+    } else if (!cat) {
+      cat = s.category || "Technical Skills";
+    }
+
     if (!groupedSkills[cat]) groupedSkills[cat] = [];
-    groupedSkills[cat].push(s);
+    groupedSkills[cat].push({
+      ...s,
+      name: skillName,
+      category: cat,
+    });
   });
 
   return (
@@ -115,13 +208,13 @@ export function SkillsEditor() {
         <div>
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <span>Skills & Competencies</span>
-            {isCategorized && (
+            {(isCategorized || hasColonPrefixes) && (
               <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                Matrix Mode
+                Categorized
               </span>
             )}
           </h2>
-          <p className="text-xs text-gray-500">Add technical skills, tools, frameworks, and group into categories.</p>
+          <p className="text-xs text-gray-500">Organize technical skills, tools, and proficiencies cleanly for ATS & recruiters.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -135,7 +228,7 @@ export function SkillsEditor() {
             title="Toggle Grouped Skills Matrix on Resume"
           >
             <Layers size={13} />
-            <span>{isCategorized ? "Matrix View: Active" : "Group by Category"}</span>
+            <span>{isCategorized ? "Categorized: On" : "Group by Category"}</span>
           </button>
           <button
             type="button"
@@ -146,6 +239,67 @@ export function SkillsEditor() {
             {loading ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
             <span>AI Suggest</span>
           </button>
+        </div>
+      </div>
+
+      {/* Auto-Organize Banner if colon prefixes detected */}
+      {hasColonPrefixes && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start sm:items-center gap-2.5 text-xs text-amber-900">
+            <Wand2 size={18} className="text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+            <div>
+              <p className="font-bold">Embedded Category Headers Detected!</p>
+              <p className="text-amber-700 text-[11.5px] mt-0.5">
+                Some skills contain prefixes like <em>"Programming Languages: Dart"</em>. Click to cleanly separate them into professional categories.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAutoOrganizeSkills}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition shrink-0 cursor-pointer shadow-xs"
+          >
+            Auto-Organize Skills
+          </button>
+        </div>
+      )}
+
+      {/* Resume Skill Display Format Selector */}
+      <div className="bg-white border border-gray-200 rounded-xl p-3.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-gray-800">Resume Display Format:</span>
+          <span className="text-[11px] text-gray-400">Controls visual layout on template</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { id: "inline", label: "Inline (Executive)", icon: AlignLeft, desc: "Category: Skill, Skill..." },
+            { id: "pills", label: "Badges / Pills", icon: Tag, desc: "Refined modern badges" },
+            { id: "dots", label: "Proficiency Dots", icon: CircleDot, desc: "1-5 circle rating" },
+            { id: "bars", label: "Progress Bars", icon: BarChart2, desc: "Visual percentage bar" },
+          ].map((fmt) => {
+            const Icon = fmt.icon;
+            const isSelected = currentStyle === fmt.id;
+            return (
+              <button
+                key={fmt.id}
+                type="button"
+                onClick={() => handleSetStyle(fmt.id)}
+                className={`flex flex-col items-start p-2.5 rounded-xl border transition text-left cursor-pointer ${
+                  isSelected
+                    ? "bg-black text-white border-black shadow-sm"
+                    : "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 w-full mb-1">
+                  <Icon size={14} className={isSelected ? "text-white" : "text-gray-500"} />
+                  <span className="text-xs font-bold truncate">{fmt.label}</span>
+                </div>
+                <span className={`text-[10px] leading-tight ${isSelected ? "text-gray-300" : "text-gray-400"}`}>
+                  {fmt.desc}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -244,7 +398,7 @@ export function SkillsEditor() {
 
         {skills.length === 0 ? (
           <p className="text-xs text-gray-400 italic">No skills added yet. Type above or click AI suggestions.</p>
-        ) : isCategorized ? (
+        ) : isCategorized || hasColonPrefixes ? (
           /* Categorized Matrix Layout in Editor */
           <div className="space-y-4">
             {Object.keys(groupedSkills).map((catName) => (

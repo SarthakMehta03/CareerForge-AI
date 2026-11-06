@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useResume } from "../../../context/ResumeContext";
 
+// Safely extract the display name from an interest item (handles both strings and objects)
+const getName = (item) =>
+  typeof item === "object" && item !== null ? item?.name || "" : String(item || "");
+
+// Safely extract a unique key from an interest item
+const getKey = (item, idx) =>
+  typeof item === "object" && item !== null ? item?.id || `int_${idx}` : `int_${item}_${idx}`;
+
 export function InterestsEditor() {
   const { resume, setResume } = useResume();
   const interests = resume.interests || [];
@@ -10,16 +18,29 @@ export function InterestsEditor() {
   const handleAdd = () => {
     const val = newInterest.trim();
     if (!val) return;
-    if (interests.includes(val)) return;
 
-    setResume((prev) => ({ ...prev, interests: [...(prev.interests || []), val] }));
+    // Check for duplicates (handle both strings and objects)
+    const alreadyExists = interests.some(
+      (item) => getName(item).toLowerCase() === val.toLowerCase()
+    );
+    if (alreadyExists) return;
+
+    // Push as object with id for consistency with ResumeBuilder entry system
+    const newEntry = { id: `int_${Date.now()}`, name: val };
+    setResume((prev) => ({ ...prev, interests: [...(prev.interests || []), newEntry] }));
     setNewInterest("");
   };
 
-  const handleRemove = (val) => {
+  const handleRemove = (targetItem) => {
     setResume((prev) => ({
       ...prev,
-      interests: (prev.interests || []).filter((i) => i !== val),
+      interests: (prev.interests || []).filter((item) => {
+        if (typeof targetItem === "object" && targetItem !== null) {
+          return typeof item === "object" ? item.id !== targetItem.id : true;
+        }
+        // string comparison fallback
+        return getName(item) !== getName(targetItem);
+      }),
     }));
   };
 
@@ -52,21 +73,25 @@ export function InterestsEditor() {
         {interests.length === 0 ? (
           <p className="text-xs text-gray-400 italic">No interests added yet.</p>
         ) : (
-          interests.map((item) => (
-            <div
-              key={item}
-              className="flex items-center gap-1.5 bg-gray-100 border border-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            >
-              <span>{item}</span>
-              <button
-                type="button"
-                onClick={() => handleRemove(item)}
-                className="text-gray-400 hover:text-red-600 transition"
+          interests.map((item, idx) => {
+            const displayName = getName(item);
+            if (!displayName) return null;
+            return (
+              <div
+                key={getKey(item, idx)}
+                className="flex items-center gap-1.5 bg-gray-100 border border-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-semibold"
               >
-                <X size={14} />
-              </button>
-            </div>
-          ))
+                <span>{displayName}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(item)}
+                  className="text-gray-400 hover:text-red-600 transition"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          })
         )}
       </div>
     </div>

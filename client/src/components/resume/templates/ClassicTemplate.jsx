@@ -287,13 +287,7 @@ export function ClassicTemplate({ resume, highlightKeywords = [] }) {
               headingBorderColor={headingBorderColor}
             />
             <p className="text-[11px] text-gray-800">
-              {activeLang
-                .map((l) => (
-                  <span key={l.id || l.language}>
-                    {H(l.language)}{l.proficiency ? ` (${l.proficiency})` : ""}
-                  </span>
-                ))
-                .reduce((prev, curr) => [prev, "  •  ", curr])}
+              {activeLang.map((l, idx) => (<React.Fragment key={l.id || idx}>{idx > 0 && "  •  "}{H(l.language)}{l.proficiency ? ` (${l.proficiency})` : ""}</React.Fragment>))}
             </p>
           </div>
         ) : null;
@@ -440,7 +434,7 @@ export function ClassicTemplate({ resume, highlightKeywords = [] }) {
               headingBorderColor={headingBorderColor}
             />
             <p className="text-xs text-gray-800">
-              {activeInt.map((i) => H(typeof i === "object" ? i.name : i)).reduce((prev, curr) => [prev, "  •  ", curr])}
+              {activeInt.map((i, idx) => (<React.Fragment key={idx}>{idx > 0 && "  •  "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>))}
             </p>
           </div>
         ) : null;

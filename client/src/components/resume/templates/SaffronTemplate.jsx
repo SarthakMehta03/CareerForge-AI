@@ -30,6 +30,13 @@ export function SaffronTemplate({ resume, highlightKeywords = [], variant = "saf
     projects = [],
     certifications = [],
     languages = [],
+    interests = [],
+    awards = [],
+    references = [],
+    declaration = {},
+    publications = [],
+    organizations = [],
+    customSections = [],
     hiddenSections = [],
     theme = {},
     minPageHeight = 1123,
@@ -61,6 +68,11 @@ export function SaffronTemplate({ resume, highlightKeywords = [], variant = "saf
   const activeProjects = projects.filter((p) => !p.hidden);
   const activeCerts = certifications.filter((c) => !c.hidden);
   const activeLangs = languages.filter((l) => !l.hidden);
+  const activeAwards = (awards || []).filter((a) => !a.hidden);
+  const activeInterests = (interests || []).filter((i) => typeof i === "object" ? !i.hidden : true);
+  const activeRefs = (references || []).filter((r) => !r.hidden);
+  const activePubs = (publications || []).filter((p) => !p.hidden);
+  const activeOrgs = (organizations || []).filter((o) => !o.hidden);
 
   return (
     <div
@@ -189,6 +201,64 @@ export function SaffronTemplate({ resume, highlightKeywords = [], variant = "saf
               </div>
             </div>
           )}
+
+          {/* Interests */}
+          {activeInterests.length > 0 && isVisible("interests") && (
+            <div>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-2 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                Interests
+              </h2>
+              <p className="text-[11px] text-gray-700 leading-relaxed">
+                {activeInterests.map((i, idx) => (
+                  <React.Fragment key={idx}>{idx > 0 && " • "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>
+                ))}
+              </p>
+            </div>
+          )}
+
+          {/* Awards */}
+          {activeAwards.length > 0 && isVisible("awards") && (
+            <div>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-2 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                Awards
+              </h2>
+              <div className="space-y-2">
+                {activeAwards.map((award) => (
+                  <div key={award.id || Math.random()} className="text-[11px]">
+                    <p className="font-bold text-gray-900 leading-snug">{H(award.title)}</p>
+                    {award.issuer && <p className="text-[10px] text-gray-500">{H(award.issuer)}{award.date ? ` • ${award.date}` : ""}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* References */}
+          {activeRefs.length > 0 && isVisible("references") && (
+            <div>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-2 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                References
+              </h2>
+              <div className="space-y-2">
+                {activeRefs.map((ref) => (
+                  <div key={ref.id || Math.random()} className="text-[11px]">
+                    <p className="font-bold text-gray-900">{H(ref.name)}</p>
+                    {ref.relationship && <p className="text-[10px] text-gray-500">{ref.relationship}</p>}
+                    {ref.company && <p className="text-[10px] text-gray-600">{ref.company}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column (65% width) */}
@@ -288,6 +358,94 @@ export function SaffronTemplate({ resume, highlightKeywords = [], variant = "saf
               </div>
             </div>
           )}
+
+          {/* Publications */}
+          {activePubs.length > 0 && isVisible("publications") && (
+            <div>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-3 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                Publications
+              </h2>
+              <div className="space-y-3">
+                {activePubs.map((pub) => (
+                  <div key={pub.id || Math.random()} className="text-xs">
+                    <p className="font-bold text-gray-900">{H(pub.title)}</p>
+                    {pub.publisher && <p className="text-[10.5px] text-gray-500">{H(pub.publisher)}{pub.date ? ` • ${pub.date}` : ""}</p>}
+                    {pub.description && <p className="text-gray-600 mt-1 whitespace-pre-line">{H(pub.description)}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Organizations */}
+          {activeOrgs.length > 0 && isVisible("organizations") && (
+            <div>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-3 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                Organizations & Volunteering
+              </h2>
+              <div className="space-y-3">
+                {activeOrgs.map((org) => (
+                  <div key={org.id || Math.random()} className="text-xs">
+                    <div className="flex justify-between items-baseline font-bold text-gray-900">
+                      <span>{H(org.name)}{org.role && <span className="font-normal text-gray-600"> — {H(org.role)}</span>}</span>
+                      {(org.startDate || org.endDate) && (
+                        <span className="text-[11px] text-gray-400 font-normal">{org.startDate}{org.startDate && org.endDate ? " – " : ""}{org.endDate}</span>
+                      )}
+                    </div>
+                    {org.description && <p className="text-gray-600 mt-1 whitespace-pre-line">{H(org.description)}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Declaration */}
+          {declaration && declaration.statement && isVisible("declaration") && (
+            <div>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-3 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                Declaration
+              </h2>
+              <p className="text-xs text-gray-700 italic whitespace-pre-line">{H(declaration.statement)}</p>
+              <div className="flex justify-between items-center mt-3 text-xs text-gray-600">
+                {declaration.place && <span>{declaration.place}</span>}
+                {declaration.date && <span>{declaration.date}</span>}
+              </div>
+              {declaration.signatureName && <p className="text-xs font-bold text-gray-900 mt-2">{declaration.signatureName}</p>}
+            </div>
+          )}
+
+          {/* Custom Sections */}
+          {customSections && customSections.length > 0 && isVisible("custom") && customSections.map((cSec) => (
+            <div key={cSec.id}>
+              <h2
+                className="resume-heading-block text-xs font-bold uppercase tracking-wider pb-1 mb-3 border-b"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                {cSec.title || "Custom Section"}
+              </h2>
+              <div className="space-y-2">
+                {(cSec.items || []).map((item) => (
+                  <div key={item.id || Math.random()} className="text-xs">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-bold text-gray-900">{H(item.title)}</span>
+                      {item.date && <span className="text-[11px] text-gray-400">{item.date}</span>}
+                    </div>
+                    {item.subtitle && <p className="text-[10.5px] text-gray-600 font-medium">{H(item.subtitle)}</p>}
+                    {item.description && <p className="text-gray-600 mt-1 whitespace-pre-line">{H(item.description)}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

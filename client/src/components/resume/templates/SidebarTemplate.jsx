@@ -73,7 +73,7 @@ export function SidebarTemplate({ resume, highlightKeywords = [] }) {
   const activeOrgs = organizations.filter((o) => !o.hidden);
 
   return (
-    <div className={w-full \ \ \ \ text-gray-900} style={{ minHeight: \px }}>
+    <div className={`w-full ${fontFamilyClass} text-gray-900`} style={{ minHeight: `${minPageHeight}px` }}>
       {/* Top Banner / Header (Full Width) */}
       <div className="pb-5 border-b border-gray-200" style={{ ...styles.sectionStyle, borderBottomColor: headingBorderColor }}>
             <div className="flex items-center justify-between gap-4">
@@ -244,7 +244,7 @@ export function SidebarTemplate({ resume, highlightKeywords = [] }) {
                     Interests
                   </h2>
                   <p className="text-[11px] text-gray-700 leading-relaxed">
-                    {activeInterests.map((i) => H(i.name || i)).reduce((prev, curr) => [prev, " • ", curr])}
+                    {activeInterests.map((i, idx) => (<React.Fragment key={idx}>{idx > 0 && " • "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>))}
                   </p>
                 </div>
               )}

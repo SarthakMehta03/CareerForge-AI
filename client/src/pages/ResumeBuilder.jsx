@@ -88,8 +88,10 @@ import VersionHistoryModal from "../components/resume/modals/VersionHistoryModal
 import InterviewPrepModal from "../components/resume/modals/InterviewPrepModal";
 import CoverLetterModal from "../components/resume/modals/CoverLetterModal";
 import PhotoDisplay from "../components/resume/PhotoDisplay";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 import { exportResumeBackup } from "../utils/resumeParser";
 import { lintResume } from "../utils/resumeLinter";
+import { calculateClientATS } from "../utils/atsCalculator";
 
 const sectionMeta = {
   summary: { label: "Summary", icon: FileText },
@@ -155,8 +157,9 @@ function ResumeBuilderContent({ resumeId }) {
     canRedo,
   } = useResume();
 
-  // Real-time resume linter calculation
+  // Real-time resume linter calculation & ATS calculation
   const lintResults = lintResume(resume);
+  const atsResult = React.useMemo(() => calculateClientATS(resume), [resume]);
 
   // track which specific entry is being edited
   const [editingEntry, setEditingEntry] = useState(null);
@@ -426,10 +429,23 @@ function ResumeBuilderContent({ resumeId }) {
     if (secKey === "summary") {
       return resume.summary ? [{ id: "summary_0", content: resume.summary }] : [];
     }
+    if (secKey === "interests") {
+      // Normalize interests: could be strings or objects { id, name }
+      return (resume.interests || []).map((item, idx) =>
+        typeof item === "object" && item !== null
+          ? item
+          : { id: `int_${idx}`, name: item }
+      );
+    }
     if (secKey === "declaration") {
       return resume.declaration?.statement || resume.declaration?.place || resume.declaration?.signatureName
         ? [{ id: "declaration_0", ...resume.declaration }]
         : [];
+    }
+    if (secKey === "custom") {
+      return resume.customSections && resume.customSections.length > 0
+        ? resume.customSections
+        : resume.custom || [];
     }
     return resume[secKey] || [];
   };
@@ -456,7 +472,7 @@ function ResumeBuilderContent({ resumeId }) {
     if (secKey === "projects") return entry.title || "New Project";
     if (secKey === "certifications") return entry.name || "New Certification";
     if (secKey === "awards") return entry.title || "New Award";
-    if (secKey === "interests") return entry.name || "New Interest";
+    if (secKey === "interests") return typeof entry === "object" ? (entry.name || "New Interest") : (entry || "New Interest");
     if (secKey === "references") return entry.name ? `${entry.name} (${entry.company || "Reference"})` : "New Reference";
     if (secKey === "publications") return entry.title || "New Publication";
     if (secKey === "organizations") return entry.name ? `${entry.name}, ${entry.role || "Volunteer"}` : "New Organization";
@@ -475,6 +491,20 @@ function ResumeBuilderContent({ resumeId }) {
     }
     if (secKey === "declaration") {
       setEditingEntry({ section: "declaration", entryId: "declaration_0" });
+      return;
+    }
+    if (secKey === "custom") {
+      const timestamp = Date.now();
+      const newSec = {
+        id: `custom_${timestamp}`,
+        title: "Custom Section",
+        items: [],
+      };
+      setResume((prev) => ({
+        ...prev,
+        customSections: [...(prev.customSections || []), newSec],
+      }));
+      setEditingEntry({ section: "custom", entryId: newSec.id });
       return;
     }
     const timestamp = Date.now();
@@ -503,9 +533,22 @@ function ResumeBuilderContent({ resumeId }) {
   };
 
   const handleDeleteEntry = (secKey, entryId) => {
+    if (secKey === "custom") {
+      setResume((prev) => ({
+        ...prev,
+        customSections: (prev.customSections || []).filter((e) => e.id !== entryId),
+        custom: (prev.custom || []).filter((e) => e.id !== entryId),
+      }));
+      if (editingEntry?.entryId === entryId) setEditingEntry(null);
+      return;
+    }
     setResume((prev) => ({
       ...prev,
-      [secKey]: (prev[secKey] || []).filter((e) => e.id !== entryId),
+      [secKey]: (prev[secKey] || []).filter((e) => {
+        // Handle both objects with .id and plain strings (interests)
+        if (typeof e === "object" && e !== null) return e.id !== entryId;
+        return true; // don't filter strings by id — they have synthetic ids
+      }),
     }));
     if (editingEntry?.entryId === entryId) setEditingEntry(null);
   };
@@ -515,13 +558,29 @@ function ResumeBuilderContent({ resumeId }) {
       toggleSectionVisibility("summary");
       return;
     }
+    if (secKey === "custom") {
+      setResume((prev) => {
+        const list = prev.customSections || prev.custom || [];
+        return {
+          ...prev,
+          customSections: list.map((item) =>
+            item.id === entryId ? { ...item, hidden: !item.hidden } : item
+          ),
+        };
+      });
+      return;
+    }
     setResume((prev) => {
       const list = prev[secKey] || [];
       return {
         ...prev,
-        [secKey]: list.map((item) =>
-          item.id === entryId ? { ...item, hidden: !item.hidden } : item
-        ),
+        [secKey]: list.map((item) => {
+          // Handle both objects with .id and plain strings
+          if (typeof item === "object" && item !== null) {
+            return item.id === entryId ? { ...item, hidden: !item.hidden } : item;
+          }
+          return item; // strings don't support visibility toggle
+        }),
       };
     });
   };
@@ -531,6 +590,11 @@ function ResumeBuilderContent({ resumeId }) {
     if (secKey === "summary") {
       setResume((prev) => ({ ...prev, summary: "" }));
       toast.success("Summary cleared");
+      return;
+    }
+    if (secKey === "custom") {
+      setResume((prev) => ({ ...prev, customSections: [], custom: [] }));
+      toast.success("Custom sections cleared");
       return;
     }
     setResume((prev) => ({ ...prev, [secKey]: [] }));
@@ -685,22 +749,24 @@ function ResumeBuilderContent({ resumeId }) {
               </button>
             </div>
 
-            {/* Quality Score Pill */}
+            {/* ATS Readiness Score Pill */}
             <button
-              onClick={() => setIsQualityModalOpen(true)}
+              onClick={() => setIsATSModalOpen(true)}
               className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-2xs transition cursor-pointer"
-              title="Resume Quality & Consistency Linter (Click to audit)"
+              title="ATS Resume Readiness Score (Click to view deep audit)"
             >
-              <ShieldCheck size={14} className={lintResults.allChecksPassed ? "text-green-600" : "text-amber-500"} />
-              <span className="hidden sm:inline">Score</span>
+              <Target size={14} className={atsResult.atsScore >= 75 ? "text-emerald-600" : atsResult.atsScore >= 50 ? "text-amber-500" : "text-rose-500"} />
+              <span className="hidden sm:inline">ATS Score</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
-                  lintResults.allChecksPassed
-                    ? "bg-green-100 text-green-900"
-                    : "bg-amber-100 text-amber-900"
+                  atsResult.atsScore >= 75
+                    ? "bg-emerald-100 text-emerald-900"
+                    : atsResult.atsScore >= 50
+                    ? "bg-amber-100 text-amber-900"
+                    : "bg-rose-100 text-rose-900"
                 }`}
               >
-                {lintResults.qualityScore}%
+                {atsResult.atsScore}%
               </span>
             </button>
 
@@ -1164,6 +1230,7 @@ function ResumeBuilderContent({ resumeId }) {
                 onOpenQualityModal={() => setIsQualityModalOpen(true)}
                 onOpenJobMatch={() => setIsJobMatchModalOpen(true)}
                 onOpenInterviewPrep={() => setIsInterviewPrepOpen(true)}
+                onOpenATSModal={() => setIsATSModalOpen(true)}
                 onOpenCoverLetter={() => {
                   setCoverLetterPrefill({ companyName: "", jobDescription: "" });
                   setIsCoverLetterOpen(true);
@@ -1174,7 +1241,9 @@ function ResumeBuilderContent({ resumeId }) {
 
           {/* ── Right Column: Live Resume Preview (6 Cols Desktop) ── */}
           <div className={`md:col-span-6 ${mobileTab === "content" ? "hidden md:block" : "block"}`}>
-            <ResumePreview resume={resume} />
+            <ErrorBoundary title="Resume Preview Encountered an Issue">
+              <ResumePreview resume={resume} />
+            </ErrorBoundary>
           </div>
         </div>
       </main>
@@ -1228,7 +1297,9 @@ function ResumeBuilderContent({ resumeId }) {
                 </div>
               )}
 
-              {renderSectionEditor(editingEntry.section)}
+              <ErrorBoundary title={`Unable to load editor for ${sectionMeta[editingEntry.section]?.label || editingEntry.section}`}>
+                {renderSectionEditor(editingEntry.section)}
+              </ErrorBoundary>
             </div>
 
             {/* Modal Footer */}
@@ -1394,7 +1465,9 @@ export function ResumeBuilder() {
 
   return (
     <ResumeProvider initialData={initialData} resumeId={resumeId}>
-      <ResumeBuilderContent resumeId={resumeId} />
+      <ErrorBoundary title="Resume Builder Encountered an Issue">
+        <ResumeBuilderContent resumeId={resumeId} />
+      </ErrorBoundary>
     </ResumeProvider>
   );
 }

@@ -5,7 +5,12 @@ import InputField from "../../auth/InputField";
 
 export function LanguagesEditor() {
   const { resume, setResume } = useResume();
-  const languages = resume.languages || [];
+  const rawLanguages = resume.languages || [];
+  const languages = rawLanguages.map((l, idx) =>
+    typeof l === "object" && l !== null
+      ? l
+      : { id: `lang_${idx}`, language: String(l || ""), proficiency: "Fluent" }
+  );
 
   const handleAdd = () => {
     const newLang = {
@@ -19,7 +24,7 @@ export function LanguagesEditor() {
   const handleUpdate = (id, field, value) => {
     setResume((prev) => ({
       ...prev,
-      languages: (prev.languages || []).map((lang) =>
+      languages: languages.map((lang) =>
         lang.id === id ? { ...lang, [field]: value } : lang
       ),
     }));
@@ -28,7 +33,7 @@ export function LanguagesEditor() {
   const handleDelete = (id) => {
     setResume((prev) => ({
       ...prev,
-      languages: (prev.languages || []).filter((lang) => lang.id !== id),
+      languages: languages.filter((lang) => lang.id !== id),
     }));
   };
 

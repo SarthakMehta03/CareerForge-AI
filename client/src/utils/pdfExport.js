@@ -129,7 +129,7 @@ export async function downloadResumePDF(elementId = "resume-preview-content", re
             height: 297mm !important;
             max-height: 297mm !important;
             margin: 0 !important;
-            padding: 0 !important;
+            box-sizing: border-box !important;
             box-shadow: none !important;
             border: none !important;
             border-radius: 0 !important;
@@ -140,6 +140,16 @@ export async function downloadResumePDF(elementId = "resume-preview-content", re
           .resume-page-sheet:last-child {
             page-break-after: auto !important;
             break-after: auto !important;
+          }
+          .resume-entry {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          .resume-heading-block {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            break-after: avoid !important;
+            page-break-after: avoid !important;
           }
           .no-print {
             display: none !important;
