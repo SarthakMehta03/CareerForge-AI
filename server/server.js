@@ -7,7 +7,8 @@ const authRoutes = require("./routes/authRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
 const aiResumeRoutes = require("./routes/aiResumeRoutes");
 
-dotenv.config();
+const path = require("path");
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 // Connect to database
 connectDB();
