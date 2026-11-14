@@ -19,12 +19,14 @@ import {
   Building,
 } from "lucide-react";
 import { HighlightText } from "../HighlightText";
-import { getThemeSpacingStyles } from "../../../utils/themeStyles";
+import { getThemeSpacingStyles, formatResumeDate } from "../../../utils/themeStyles";
 import PhotoDisplay from "../PhotoDisplay";
 import HeadingRenderer from "../HeadingRenderer";
 import SkillsRenderer from "../SkillsRenderer";
+import ContactItem from "../ContactItem";
+import EntryHeader from "../EntryHeader";
 
-export function MinimalTemplate({ resume, highlightKeywords = [] }) {
+export function MinimalTemplate({ resume = {}, highlightKeywords = [] }) {
   const {
     personalInfo = {},
     summary,
@@ -63,15 +65,6 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
   } = resume;
 
   const isVisible = (sec) => !hiddenSections.includes(sec);
-
-  const accentColor = theme.primaryColor || "#000000";
-  const fontFamilyClass =
-    theme.fontFamily === "serif"
-      ? "font-serif"
-      : theme.fontFamily === "mono"
-      ? "font-mono"
-      : "font-sans";
-
   const activeOrder = sectionOrder.filter((key) => key !== "personalInfo" && isVisible(key));
 
   // Reactive theme micro-spacing & typography styles
@@ -79,22 +72,6 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
 
   // Keyword highlighting helper
   const H = (text) => <HighlightText text={text} keywords={highlightKeywords} />;
-
-  // Accent Targets
-  const targets = theme.accentTargets || {
-    name: true,
-    jobTitle: true,
-    headings: true,
-    headingLine: true,
-  };
-
-  const nameColor = targets.name ? accentColor : "#111827";
-  const jobTitleColor = targets.jobTitle ? accentColor : "#6B7280";
-  const headingTextColor = targets.headings !== false ? accentColor : "#9CA3AF";
-  const headingBorderColor = targets.headingLine !== false ? accentColor : "#F3F4F6";
-
-  const headingTransformClass =
-    theme.capitalization === "capitalize" ? "capitalize" : "uppercase";
 
   const isCentered = theme.headerAlign === "center";
   const headerAlignClass =
@@ -104,26 +81,21 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
       ? "text-right items-end justify-end"
       : "text-left items-start justify-start";
 
-  const delimiterSymbol =
-    theme.headerDelimiter === "bar" ? "/" : theme.headerDelimiter === "icon" ? "" : "•";
-
   const renderSection = (secKey) => {
     switch (secKey) {
       case "summary":
         return summary && theme.showSummaryHeading !== false ? (
           <div key="summary" style={styles.sectionStyle}>
             <HeadingRenderer
-              title="Summary"
+              title="Professional Summary"
               icon={FileText}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <p className="text-gray-600 text-xs leading-relaxed">{H(summary)}</p>
+            <p className="text-gray-800 text-justify leading-relaxed">{H(summary)}</p>
           </div>
         ) : null;
 
-      case "experience":
+      case "experience": {
         const activeExp = (experience || []).filter((e) => !e.hidden);
         return activeExp.length > 0 ? (
           <div key="experience" style={styles.sectionStyle}>
@@ -131,25 +103,23 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Experience"
               icon={Briefcase}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
             <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activeExp.map((exp) => (
-                <div key={exp.id || Math.random()}>
-                  <div className="flex justify-between items-baseline font-medium text-black">
-                    <span className="text-xs">
-                      {theme.expTitleOrder === "title_employer"
-                        ? `${exp.jobTitle || ""} / ${exp.company || ""}`
-                        : `${exp.company || ""}${exp.jobTitle ? ` / ${exp.jobTitle}` : ""}`}
-                    </span>
-                    <span className="text-[11px] text-gray-400 font-normal">
-                      {exp.startDate} {exp.startDate && exp.endDate ? "–" : ""} {exp.currentlyWorking ? "Present" : exp.endDate}
-                    </span>
-                  </div>
-                  {exp.location && <div className="text-[11px] text-gray-400">{exp.location}</div>}
+              {activeExp.map((exp, idx) => (
+                <div key={exp.id || idx} className="resume-entry" style={styles.entryStyle}>
+                  <EntryHeader
+                    title={exp.jobTitle}
+                    subtitle={exp.company}
+                    startDate={exp.startDate}
+                    endDate={exp.endDate}
+                    currentlyWorking={exp.currentlyWorking}
+                    location={exp.location}
+                    type="exp"
+                    theme={theme}
+                    H={H}
+                  />
                   {exp.description && (
-                    <div className="text-xs text-gray-600 mt-1 whitespace-pre-line leading-relaxed">
+                    <div className="text-xs text-gray-700 mt-0.5 whitespace-pre-line leading-relaxed">
                       {H(exp.description)}
                     </div>
                   )}
@@ -158,8 +128,9 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
             </div>
           </div>
         ) : null;
+      }
 
-      case "education":
+      case "education": {
         const activeEdu = (education || []).filter((e) => !e.hidden);
         return activeEdu.length > 0 ? (
           <div key="education" style={styles.sectionStyle}>
@@ -167,31 +138,32 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Education"
               icon={GraduationCap}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
             <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activeEdu.map((edu) => (
-                <div key={edu.id || Math.random()} className="flex justify-between items-baseline text-xs">
-                  <div>
-                    <span className="font-medium text-black">
-                      {theme.eduTitleOrder === "degree_school"
-                        ? `${edu.degree || ""}${edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ""}${edu.institution ? `, ${edu.institution}` : ""}`
-                        : `${edu.institution || ""}${edu.degree ? ` — ${edu.degree}` : ""}${edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ""}`}
-                    </span>
-                    {edu.grade && <p className="text-[11px] text-gray-400">Grade: {edu.grade}</p>}
-                    {edu.description && <p className="text-gray-500 mt-0.5">{H(edu.description)}</p>}
-                  </div>
-                  <span className="text-[11px] text-gray-400 whitespace-nowrap ml-4">
-                    {edu.startDate} {edu.startDate && edu.endDate ? "–" : ""} {edu.endDate}
-                  </span>
+              {activeEdu.map((edu, idx) => (
+                <div key={edu.id || idx} className="resume-entry" style={styles.entryStyle}>
+                  <EntryHeader
+                    title={edu.degree}
+                    subtitle={edu.institution}
+                    subdetail={edu.fieldOfStudy}
+                    startDate={edu.startDate}
+                    endDate={edu.endDate}
+                    type="edu"
+                    theme={theme}
+                    H={H}
+                  />
+                  {edu.grade && <p className="text-[11px] text-gray-600 italic">Grade: {edu.grade}</p>}
+                  {edu.description && (
+                    <p className="text-xs text-gray-700 mt-0.5 leading-relaxed">{H(edu.description)}</p>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         ) : null;
+      }
 
-      case "skills":
+      case "skills": {
         const activeSkills = (skills || []).filter((s) => !s.hidden);
         return activeSkills.length > 0 ? (
           <div key="skills" style={styles.sectionStyle}>
@@ -199,8 +171,6 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Skills"
               icon={Wrench}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
             <SkillsRenderer
               skills={activeSkills}
@@ -209,34 +179,43 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
             />
           </div>
         ) : null;
+      }
 
-      case "projects":
+      case "projects": {
         const activeProj = (projects || []).filter((p) => !p.hidden);
         return activeProj.length > 0 ? (
           <div key="projects" style={styles.sectionStyle}>
             <HeadingRenderer
-              title="Projects"
+              title="Key Projects"
               icon={FolderGit2}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
             <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activeProj.map((proj) => (
-                <div key={proj.id || Math.random()}>
-                  <div className="flex justify-between font-medium text-black text-xs">
-                    <span>{H(proj.title)}</span>
-                    <span className="text-[11px] text-gray-400 font-normal">
-                      {proj.startDate} {proj.startDate && proj.endDate ? "–" : ""} {proj.endDate}
-                    </span>
-                  </div>
-                  {proj.technologies && (
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {H(proj.technologies)}
-                    </p>
+              {activeProj.map((proj, idx) => (
+                <div key={proj.id || idx} className="resume-entry" style={styles.entryStyle}>
+                  <EntryHeader
+                    title={proj.title}
+                    subtitle={proj.technologies ? `Tools: ${proj.technologies}` : ""}
+                    startDate={proj.startDate}
+                    endDate={proj.endDate}
+                    type="proj"
+                    theme={theme}
+                    H={H}
+                  />
+                  {proj.link && (
+                    <div className="text-[11px] mb-0.5">
+                      <ContactItem
+                        icon={LinkIcon}
+                        text={proj.link}
+                        href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`}
+                        theme={theme}
+                        accentColor={styles.accentColor}
+                        isFirst={true}
+                      />
+                    </div>
                   )}
                   {proj.description && (
-                    <div className="text-xs text-gray-600 mt-1 whitespace-pre-line leading-relaxed">
+                    <div className="text-xs text-gray-700 mt-0.5 whitespace-pre-line leading-relaxed">
                       {H(proj.description)}
                     </div>
                   )}
@@ -245,8 +224,9 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
             </div>
           </div>
         ) : null;
+      }
 
-      case "certifications":
+      case "certifications": {
         const activeCerts = (certifications || []).filter((c) => !c.hidden);
         return activeCerts.length > 0 ? (
           <div key="certifications" style={styles.sectionStyle}>
@@ -254,19 +234,17 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Certifications"
               icon={Award}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activeCerts.map((cert) => (
-                <div key={cert.id || Math.random()} className="flex justify-between items-baseline text-xs">
-                  <span className="text-gray-800 font-medium">
-                    {H(cert.name)}
-                    {cert.issuer && <span className="text-gray-400 font-normal"> — {H(cert.issuer)}</span>}
+            <div className="space-y-1.5 text-xs text-gray-800">
+              {activeCerts.map((cert, idx) => (
+                <div key={cert.id || idx} className="flex justify-between items-baseline resume-entry">
+                  <span>
+                    <strong>{H(cert.name)}</strong>
+                    {cert.issuer && <span className="text-gray-600"> — {H(cert.issuer)}</span>}
                   </span>
                   {(cert.date || cert.issueDate) && (
-                    <span className="text-[11px] text-gray-400 font-normal">
-                      {cert.date || cert.issueDate}
+                    <span className="text-[11px] italic text-gray-500 font-normal">
+                      {formatResumeDate(cert.date || cert.issueDate, theme.dateFormat)}
                     </span>
                   )}
                 </div>
@@ -274,8 +252,9 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
             </div>
           </div>
         ) : null;
+      }
 
-      case "languages":
+      case "languages": {
         const activeLang = (languages || []).filter((l) => !l.hidden);
         return activeLang.length > 0 ? (
           <div key="languages" style={styles.sectionStyle}>
@@ -283,21 +262,21 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Languages"
               icon={Languages}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-              {activeLang.map((l) => (
-                <span key={l.id || Math.random()}>
-                  <span className="font-medium text-black">{H(l.language)}</span>
-                  {l.proficiency && <span className="text-gray-400"> ({l.proficiency})</span>}
-                </span>
+            <p className="text-[11px] text-gray-800">
+              {activeLang.map((l, idx) => (
+                <React.Fragment key={l.id || idx}>
+                  {idx > 0 && "  •  "}
+                  {H(l.language)}
+                  {l.proficiency ? ` (${l.proficiency})` : ""}
+                </React.Fragment>
               ))}
-            </div>
+            </p>
           </div>
         ) : null;
+      }
 
-      case "awards":
+      case "awards": {
         const activeAwards = (awards || []).filter((a) => !a.hidden);
         return activeAwards.length > 0 ? (
           <div key="awards" style={styles.sectionStyle}>
@@ -305,24 +284,27 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Awards & Honors"
               icon={Award}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activeAwards.map((item) => (
-                <div key={item.id || Math.random()} className="flex justify-between items-baseline text-xs">
-                  <span className="font-medium text-black">
-                    {H(item.title)}
-                    {item.issuer && <span className="text-gray-400 font-normal ml-1">({H(item.issuer)})</span>}
+            <div className="space-y-1.5 text-xs">
+              {activeAwards.map((item, idx) => (
+                <div key={item.id || idx} className="flex justify-between items-baseline resume-entry">
+                  <span>
+                    <strong className="text-gray-900">{H(item.title)}</strong>
+                    {item.issuer && <span className="text-gray-600 ml-1">({H(item.issuer)})</span>}
                   </span>
-                  {item.date && <span className="text-[11px] text-gray-400">{item.date}</span>}
+                  {item.date && (
+                    <span className="text-[11px] italic text-gray-500">
+                      {formatResumeDate(item.date, theme.dateFormat)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         ) : null;
+      }
 
-      case "publications":
+      case "publications": {
         const activePubs = (publications || []).filter((p) => !p.hidden);
         return activePubs.length > 0 ? (
           <div key="publications" style={styles.sectionStyle}>
@@ -330,25 +312,28 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Publications & Research"
               icon={BookOpen}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activePubs.map((pub) => (
-                <div key={pub.id || Math.random()} className="text-xs">
-                  <div className="flex justify-between font-medium text-black">
+            <div className="space-y-2 text-xs">
+              {activePubs.map((pub, idx) => (
+                <div key={pub.id || idx} className="resume-entry">
+                  <div className="flex justify-between font-bold text-gray-900">
                     <span>{H(pub.title)}</span>
-                    {pub.date && <span className="text-[11px] text-gray-400 font-normal">{pub.date}</span>}
+                    {pub.date && (
+                      <span className="text-[11px] italic font-normal text-gray-500">
+                        {formatResumeDate(pub.date, theme.dateFormat)}
+                      </span>
+                    )}
                   </div>
-                  {pub.publisher && <p className="text-[11px] text-gray-400">{H(pub.publisher)}</p>}
-                  {pub.description && <p className="text-gray-600 mt-0.5 leading-relaxed">{H(pub.description)}</p>}
+                  {pub.publisher && <p className="text-[11px] italic text-gray-600">{H(pub.publisher)}</p>}
+                  {pub.description && <p className="text-gray-700 mt-0.5 leading-relaxed">{H(pub.description)}</p>}
                 </div>
               ))}
             </div>
           </div>
         ) : null;
+      }
 
-      case "organizations":
+      case "organizations": {
         const activeOrgs = (organizations || []).filter((o) => !o.hidden);
         return activeOrgs.length > 0 ? (
           <div key="organizations" style={styles.sectionStyle}>
@@ -356,27 +341,28 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Organizations & Volunteering"
               icon={Building}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <div className="flex flex-col" style={styles.entryGapStyle}>
-              {activeOrgs.map((org) => (
-                <div key={org.id || Math.random()} className="text-xs">
-                  <div className="flex justify-between items-baseline font-medium text-black">
+            <div className="space-y-2.5 text-xs">
+              {activeOrgs.map((org, idx) => (
+                <div key={org.id || idx} className="resume-entry">
+                  <div className="flex justify-between items-baseline font-bold text-gray-900">
                     <span>{H(org.name)}</span>
-                    <span className="text-[11px] text-gray-400 font-normal">
-                      {org.startDate} {org.startDate && org.endDate ? "–" : ""} {org.endDate || (org.startDate ? "Present" : "")}
+                    <span className="text-[11px] italic font-normal text-gray-600">
+                      {formatResumeDate(org.startDate, theme.dateFormat)}
+                      {org.startDate && (org.endDate || org.currentlyActive) ? " – " : ""}
+                      {org.currentlyActive ? "Present" : formatResumeDate(org.endDate, theme.dateFormat)}
                     </span>
                   </div>
-                  {org.role && <p className="text-[11px] text-gray-500">{H(org.role)}</p>}
-                  {org.description && <p className="text-gray-600 mt-0.5 leading-relaxed">{H(org.description)}</p>}
+                  {org.role && <p className="text-[11px] italic text-gray-700">{H(org.role)}</p>}
+                  {org.description && <p className="text-gray-700 mt-0.5 leading-relaxed">{H(org.description)}</p>}
                 </div>
               ))}
             </div>
           </div>
         ) : null;
+      }
 
-      case "references":
+      case "references": {
         const activeRefs = (references || []).filter((r) => !r.hidden);
         return activeRefs.length > 0 ? (
           <div key="references" style={styles.sectionStyle}>
@@ -384,49 +370,62 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="References"
               icon={Users}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
             <div className="grid grid-cols-2 gap-3 text-xs">
-              {activeRefs.map((ref) => (
-                <div key={ref.id || Math.random()}>
-                  <p className="font-medium text-black">{H(ref.name)}</p>
-                  <p className="text-gray-500">{ref.relationship}{ref.company ? ` at ${H(ref.company)}` : ""}</p>
-                  {ref.email && <p className="text-gray-400 text-[11px]">{ref.email}</p>}
+              {activeRefs.map((ref, idx) => (
+                <div key={ref.id || idx} className="resume-entry">
+                  <p className="font-bold text-gray-900">{H(ref.name)}</p>
+                  <p className="text-gray-600 italic">{ref.relationship}{ref.company ? ` at ${H(ref.company)}` : ""}</p>
+                  {ref.email && <p className="text-gray-500 text-[11px]">{ref.email}</p>}
+                  {ref.phone && <p className="text-gray-500 text-[11px]">{ref.phone}</p>}
                 </div>
               ))}
             </div>
           </div>
         ) : null;
+      }
 
-      case "declaration":
+      case "declaration": {
         const dec = declaration;
         return dec && (dec.statement || dec.signatureName) ? (
-          <div key="declaration" style={styles.sectionStyle}>
+          <div key="declaration" style={styles.sectionStyle} className="resume-entry">
             {theme.showDeclarationHeading !== false && (
               <HeadingRenderer
                 title="Declaration"
                 icon={FileCheck}
                 theme={theme}
-                headingTextColor={headingTextColor}
-                headingBorderColor={headingBorderColor}
               />
             )}
-            <p className="text-xs text-gray-600 leading-relaxed italic">{H(dec.statement)}</p>
-            <div className={`mt-4 flex justify-between text-xs text-gray-700 ${theme.declarationPosition === "left" ? "flex-row-reverse" : "flex-row"}`}>
+            <p className="text-xs text-gray-800 italic leading-relaxed">{H(dec.statement)}</p>
+            <div
+              className={`mt-4 flex text-xs text-gray-800 ${
+                theme.declarationPosition === "left"
+                  ? "justify-start gap-12"
+                  : theme.declarationPosition === "center"
+                  ? "justify-center gap-12"
+                  : "justify-between"
+              }`}
+            >
               <div>
                 {dec.place && <p>Place: {dec.place}</p>}
-                {dec.date && <p>Date: {dec.date}</p>}
+                {dec.date && <p>Date: {formatResumeDate(dec.date, theme.dateFormat)}</p>}
               </div>
-              <div className="text-right">
-                {theme.signatureLine !== "none" && <div className="w-32 border-b border-gray-300 mb-1 ml-auto" />}
-                <p className="font-medium text-black">{dec.signatureName}</p>
+              <div className={theme.declarationPosition === "left" ? "text-left" : "text-right"}>
+                {theme.signatureLine !== "none" && (
+                  <div
+                    className={`w-36 mb-1 ${
+                      theme.signatureLine === "dashed" ? "border-b border-dashed" : "border-b border-solid"
+                    } border-gray-400 ${theme.declarationPosition === "left" ? "mr-auto" : "ml-auto"}`}
+                  />
+                )}
+                <p className="font-bold">{dec.signatureName}</p>
               </div>
             </div>
           </div>
         ) : null;
+      }
 
-      case "interests":
+      case "interests": {
         const activeInt = (interests || []).filter((i) => !i.hidden);
         return activeInt.length > 0 ? (
           <div key="interests" style={styles.sectionStyle}>
@@ -434,35 +433,39 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
               title="Interests & Hobbies"
               icon={Heart}
               theme={theme}
-              headingTextColor={headingTextColor}
-              headingBorderColor={headingBorderColor}
             />
-            <p className="text-xs text-gray-600">
-              {activeInt.map((i, idx) => (<React.Fragment key={idx}>{idx > 0 && " / "}{H(typeof i === "object" ? i.name : i)}</React.Fragment>))}
+            <p className="text-xs text-gray-800">
+              {activeInt.map((i, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && "  •  "}
+                  {H(typeof i === "object" ? i.name : i)}
+                </React.Fragment>
+              ))}
             </p>
           </div>
         ) : null;
+      }
 
-      case "custom":
+      case "custom": {
         return customSections && customSections.length > 0 ? (
-          <div key="custom" className="flex flex-col" style={styles.entryGapStyle}>
+          <div key="custom" className="space-y-4">
             {customSections.map((cSec) => (
-              <div key={cSec.id} style={styles.sectionStyle}>
+              <div key={cSec.id} className="mb-4" style={styles.sectionStyle}>
                 <HeadingRenderer
                   title={cSec.title}
                   theme={theme}
-                  headingTextColor={headingTextColor}
-                  headingBorderColor={headingBorderColor}
                 />
-                <div className="flex flex-col" style={styles.entryGapStyle}>
-                  {(cSec.items || []).map((item) => (
-                    <div key={item.id} className="text-xs">
-                      <div className="flex justify-between font-medium text-black">
+                <div className="space-y-2">
+                  {(cSec.items || []).map((item, idx) => (
+                    <div key={item.id || idx} className="text-xs resume-entry" style={styles.entryStyle}>
+                      <div className="flex justify-between font-bold text-gray-900">
                         <span>{H(item.title)}</span>
-                        <span className="text-gray-400 font-normal text-[11px]">{item.date}</span>
+                        <span className="text-gray-500 italic font-normal text-[11px]">
+                          {formatResumeDate(item.date, theme.dateFormat)}
+                        </span>
                       </div>
-                      {item.subtitle && <p className="text-gray-500">{H(item.subtitle)}</p>}
-                      {item.description && <p className="text-gray-600 mt-0.5 leading-relaxed">{H(item.description)}</p>}
+                      {item.subtitle && <p className="text-gray-700 italic">{H(item.subtitle)}</p>}
+                      {item.description && <p className="text-gray-700 mt-0.5 leading-relaxed">{H(item.description)}</p>}
                     </div>
                   ))}
                 </div>
@@ -470,6 +473,7 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
             ))}
           </div>
         ) : null;
+      }
 
       default:
         return null;
@@ -477,80 +481,124 @@ export function MinimalTemplate({ resume, highlightKeywords = [] }) {
   };
 
   return (
-    <div className={`w-full ${fontFamilyClass} ${styles.pageMarginClass} ${styles.fontScaleClass} ${styles.lineHeightClass} text-gray-900`} style={{ minHeight: `${minPageHeight}px` }}>
-      {/* Top Header Minimal */}
-      <div className={`flex flex-col ${headerAlignClass}`} style={styles.sectionStyle}>
-        <div className={`flex items-center gap-4 w-full ${isCentered ? "flex-col text-center justify-center" : "justify-between"}`}>
-          <div className={headerAlignClass}>
-            <h1 className="text-3xl font-light tracking-tight" style={{ color: nameColor }}>
-              {personalInfo?.fullName || "Your Name"}
-            </h1>
-            {personalInfo?.jobTitle ? (
-              <p className="text-xs uppercase font-medium tracking-widest mt-1" style={{ color: jobTitleColor }}>
-                {personalInfo.jobTitle}
-              </p>
-            ) : null}
+    <div
+      className={`w-full ${styles.fontScaleClass} ${styles.lineHeightClass} text-gray-900 flex flex-col justify-between`}
+      style={{
+        ...styles.containerStyle,
+        minHeight: `${minPageHeight}px`,
+        boxSizing: "border-box",
+      }}
+    >
+      <div>
+        {/* Top Header Minimal */}
+        <div className={`flex flex-col ${headerAlignClass}`} style={styles.sectionStyle}>
+          <div
+            className={`flex items-center gap-4 w-full ${
+              isCentered ? "flex-col text-center justify-center" : "justify-between"
+            }`}
+          >
+            <div className={headerAlignClass}>
+              <h1
+                className="font-light tracking-tight transition-all"
+                style={styles.nameFontStyle}
+              >
+                {personalInfo?.fullName || "Your Name"}
+              </h1>
+              {personalInfo?.jobTitle ? (
+                <p
+                  className="text-xs uppercase font-medium tracking-widest mt-1 transition-colors"
+                  style={styles.jobTitleStyle}
+                >
+                  {personalInfo.jobTitle}
+                </p>
+              ) : null}
+            </div>
+
+            {personalInfo?.photo && (
+              <PhotoDisplay
+                photo={personalInfo.photo}
+                photoSettings={resume.photoSettings}
+                primaryColor={styles.accentColor}
+              />
+            )}
           </div>
 
-          {personalInfo?.photo && (
-            <PhotoDisplay
-              photo={personalInfo.photo}
-              photoSettings={resume.photoSettings}
-              primaryColor={accentColor}
+          {/* Contact Details Bar */}
+          <div
+            className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-3 pt-3 border-t w-full ${headerAlignClass}`}
+            style={{ borderColor: styles.headingBorderColor }}
+          >
+            <ContactItem
+              icon={Mail}
+              text={personalInfo?.email}
+              href={personalInfo?.email ? `mailto:${personalInfo.email}` : null}
+              theme={theme}
+              accentColor={styles.accentColor}
+              isFirst={true}
             />
-          )}
+            <ContactItem
+              icon={Phone}
+              text={personalInfo?.phone}
+              href={personalInfo?.phone ? `tel:${personalInfo.phone}` : null}
+              theme={theme}
+              accentColor={styles.accentColor}
+              delimiter={styles.delimiterSymbol}
+            />
+            <ContactItem
+              icon={MapPin}
+              text={personalInfo?.location}
+              theme={theme}
+              accentColor={styles.accentColor}
+              delimiter={styles.delimiterSymbol}
+            />
+            <ContactItem
+              icon={LinkIcon}
+              text={personalInfo?.linkedin}
+              href={
+                personalInfo?.linkedin
+                  ? personalInfo.linkedin.startsWith("http")
+                    ? personalInfo.linkedin
+                    : `https://${personalInfo.linkedin}`
+                  : null
+              }
+              theme={theme}
+              accentColor={styles.accentColor}
+              delimiter={styles.delimiterSymbol}
+            />
+            <ContactItem
+              icon={LinkIcon}
+              text={personalInfo?.github}
+              href={
+                personalInfo?.github
+                  ? personalInfo.github.startsWith("http")
+                    ? personalInfo.github
+                    : `https://${personalInfo.github}`
+                  : null
+              }
+              theme={theme}
+              accentColor={styles.accentColor}
+              delimiter={styles.delimiterSymbol}
+            />
+            <ContactItem
+              icon={Globe}
+              text={personalInfo?.portfolio}
+              href={
+                personalInfo?.portfolio
+                  ? personalInfo.portfolio.startsWith("http")
+                    ? personalInfo.portfolio
+                    : `https://${personalInfo.portfolio}`
+                  : null
+              }
+              theme={theme}
+              accentColor={styles.accentColor}
+              delimiter={styles.delimiterSymbol}
+            />
+          </div>
         </div>
 
-        <div
-          className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-3 pt-3 border-t w-full ${headerAlignClass}`}
-          style={{ borderColor: headingBorderColor }}
-        >
-          {personalInfo?.email && (
-            <span className="flex items-center gap-1">
-              <Mail size={12} style={{ color: accentColor }} />
-              {personalInfo.email}
-            </span>
-          )}
-          {personalInfo?.phone && (
-            <span className="flex items-center gap-1">
-              {delimiterSymbol && <span className="text-gray-300 mr-1">{delimiterSymbol}</span>}
-              <Phone size={12} style={{ color: accentColor }} />
-              {personalInfo.phone}
-            </span>
-          )}
-          {personalInfo?.location && (
-            <span className="flex items-center gap-1">
-              {delimiterSymbol && <span className="text-gray-300 mr-1">{delimiterSymbol}</span>}
-              <MapPin size={12} style={{ color: accentColor }} />
-              {personalInfo.location}
-            </span>
-          )}
-          {personalInfo?.linkedin && (
-            <span className="flex items-center gap-1">
-              {delimiterSymbol && <span className="text-gray-300 mr-1">{delimiterSymbol}</span>}
-              <LinkIcon size={12} style={{ color: accentColor }} />
-              {personalInfo.linkedin}
-            </span>
-          )}
-          {personalInfo?.github && (
-            <span className="flex items-center gap-1">
-              {delimiterSymbol && <span className="text-gray-300 mr-1">{delimiterSymbol}</span>}
-              <LinkIcon size={12} style={{ color: accentColor }} />
-              {personalInfo.github}
-            </span>
-          )}
-          {personalInfo?.portfolio && (
-            <span className="flex items-center gap-1">
-              {delimiterSymbol && <span className="text-gray-300 mr-1">{delimiterSymbol}</span>}
-              <Globe size={12} style={{ color: accentColor }} />
-              {personalInfo.portfolio}
-            </span>
-          )}
-        </div>
+        {/* Render All Active Sections */}
+        {activeOrder.map((secKey) => renderSection(secKey))}
       </div>
-
-      {/* Render All Active Sections */}
-      {activeOrder.map((secKey) => renderSection(secKey))}
     </div>
   );
 }

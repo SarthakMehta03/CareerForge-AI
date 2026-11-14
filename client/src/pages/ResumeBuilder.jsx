@@ -199,6 +199,16 @@ function ResumeBuilderContent({ resumeId }) {
 
   // Mobile active tab ('content', 'preview')
   const [mobileTab, setMobileTab] = useState("content");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Monitor window scroll to show quick 'Back to Top' pill
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      setShowScrollTop(window.scrollY > 350);
+    };
+    window.addEventListener("scroll", handleWindowScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleWindowScroll);
+  }, []);
 
   // Drag and Drop state for section reordering
   const [draggedSectionIndex, setDraggedSectionIndex] = useState(null);
@@ -875,18 +885,24 @@ function ResumeBuilderContent({ resumeId }) {
       </div>
 
       {/* Mobile Tab Toggle Bar */}
-      <div className="md:hidden flex border-b border-gray-200 bg-white">
+      <div className="md:hidden flex border-b border-gray-200 bg-white sticky top-[53px] z-20">
         <button
-          onClick={() => setMobileTab("content")}
-          className={`flex-1 py-3 text-xs font-bold ${
+          onClick={() => {
+            setMobileTab("content");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`flex-1 py-3 text-xs font-bold transition ${
             mobileTab === "content" ? "border-b-2 border-black text-black" : "text-gray-500"
           }`}
         >
           Editor View
         </button>
         <button
-          onClick={() => setMobileTab("preview")}
-          className={`flex-1 py-3 text-xs font-bold ${
+          onClick={() => {
+            setMobileTab("preview");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`flex-1 py-3 text-xs font-bold transition ${
             mobileTab === "preview" ? "border-b-2 border-black text-black" : "text-gray-500"
           }`}
         >
@@ -1240,7 +1256,11 @@ function ResumeBuilderContent({ resumeId }) {
           </div>
 
           {/* ── Right Column: Live Resume Preview (6 Cols Desktop) ── */}
-          <div className={`md:col-span-6 ${mobileTab === "content" ? "hidden md:block" : "block"}`}>
+          <div
+            className={`md:col-span-6 ${
+              mobileTab === "content" ? "hidden md:block" : "block"
+            } md:sticky md:top-20 md:max-h-[calc(100vh-5.5rem)] md:overflow-y-auto pr-0.5`}
+          >
             <ErrorBoundary title="Resume Preview Encountered an Issue">
               <ResumePreview resume={resume} />
             </ErrorBoundary>
@@ -1401,6 +1421,19 @@ function ResumeBuilderContent({ resumeId }) {
         initialCompany={coverLetterPrefill.companyName}
         initialJobDesc={coverLetterPrefill.jobDescription}
       />
+
+      {/* Floating Scroll to Top Pill (User-Friendly helper when scrolled deep into sections) */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 left-6 z-40 bg-white/95 hover:bg-black hover:text-white text-gray-700 border border-gray-200/90 shadow-xl px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-150"
+          title="Scroll back to top"
+        >
+          <ChevronUp size={14} />
+          <span>Top</span>
+        </button>
+      )}
     </div>
   );
 }

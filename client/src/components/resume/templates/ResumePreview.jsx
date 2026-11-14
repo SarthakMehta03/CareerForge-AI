@@ -25,6 +25,7 @@ import CobaltTemplate from "./CobaltTemplate";
 import MercuryTemplate from "./MercuryTemplate";
 import SaffronTemplate from "./SaffronTemplate";
 import EditorialTemplate from "./EditorialTemplate";
+import ResumeFooter from "../ResumeFooter";
 import { useResume } from "../../../context/ResumeContext";
 
 const A4_HEIGHT_PX = 1123; // Standard A4 height at 96 DPI CSS pixels
@@ -131,17 +132,22 @@ function getBreakCandidates(probe) {
  *  2. No lines of text have characters split horizontally.
  *  3. No orphan headings (headings left alone at page bottom with no content below).
  */
-function calculateSmartPageOffsets(probe, resume) {
+function calculateSmartPageOffsets(probe, resume, pageHeight = 1123) {
   if (!probe) return [0];
 
   const totalHeight = probe.scrollHeight;
-  if (totalHeight <= A4_HEIGHT_PX + 4) {
+  if (totalHeight <= pageHeight + 4) {
     return [0];
   }
 
   const isFullBleedSidebar = ["atlantic-blue", "hunter-green", "sidebar"].includes(resume?.template);
   const pageTopMargin = isFullBleedSidebar ? 0 : 24;
-  const pageBottomMargin = 32;
+  const hasFooter = Boolean(
+    resume?.theme?.footerPageNumbers ||
+    resume?.theme?.footerEmail ||
+    resume?.theme?.footerName
+  );
+  const pageBottomMargin = hasFooter ? 48 : 32;
 
   const candidates = getBreakCandidates(probe);
   const offsets = [0];
@@ -151,8 +157,8 @@ function calculateSmartPageOffsets(probe, resume) {
   while (currentStart < totalHeight - 4) {
     // Usable height on current page
     const availableH = pageIndex === 0
-      ? A4_HEIGHT_PX - pageBottomMargin
-      : A4_HEIGHT_PX - pageTopMargin - pageBottomMargin;
+      ? pageHeight - pageBottomMargin
+      : pageHeight - pageTopMargin - pageBottomMargin;
 
     const targetEnd = currentStart + availableH;
     const hardLimit = currentStart + availableH + pageBottomMargin; // sheet physical boundary
@@ -236,13 +242,18 @@ export function ResumePreview({ resume }) {
   } = useResume();
   const [isMissingBadgeOpen, setIsMissingBadgeOpen] = useState(false);
 
+  // ── Dynamic Page Dimensions (A4 vs US Letter) ──
+  const isUSLetter = resume?.theme?.pageFormat === "US Letter";
+  const PAGE_WIDTH_PX = isUSLetter ? 816 : 794;
+  const PAGE_HEIGHT_PX = isUSLetter ? 1056 : 1123;
+
   // ── Canvas Zoom & Fit State ──
   const [zoom, setZoom] = useState(1);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const containerRef = useRef(null);
 
   // ── Real-Time Page Boundary & Overflow Measurements ──
-  const [contentHeight, setContentHeight] = useState(A4_HEIGHT_PX);
+  const [contentHeight, setContentHeight] = useState(PAGE_HEIGHT_PX);
   const [pageOffsets, setPageOffsets] = useState([0]);
   const [overflowStats, setOverflowStats] = useState({
     isOverflown: false,
@@ -257,11 +268,11 @@ export function ResumePreview({ resume }) {
       if (!probe) return;
       const realH = probe.scrollHeight;
       setContentHeight(realH);
-      const isOver = realH > A4_HEIGHT_PX + 4; // allow 4px subpixel rounding tolerance
-      const overPx = Math.max(0, realH - A4_HEIGHT_PX);
+      const isOver = realH > PAGE_HEIGHT_PX + 4; // allow 4px subpixel rounding tolerance
+      const overPx = Math.max(0, realH - PAGE_HEIGHT_PX);
       const lines = Math.max(1, Math.ceil(overPx / 20));
 
-      const offsets = calculateSmartPageOffsets(probe, resume);
+      const offsets = calculateSmartPageOffsets(probe, resume, PAGE_HEIGHT_PX);
       const computedPages = offsets.length;
       setPageOffsets(offsets);
 
@@ -282,12 +293,12 @@ export function ResumePreview({ resume }) {
     }
 
     return () => clearTimeout(timer);
-  }, [resume, zoom]);
+  }, [resume, zoom, PAGE_HEIGHT_PX]);
 
   // Template renderer — passes minPageHeight so templates fill the full page background
   const renderTemplate = (isProbe = false) => {
     const totalPagesNow = overflowStats.totalPages || 1;
-    const minPageHeight = isProbe ? A4_HEIGHT_PX : totalPagesNow * A4_HEIGHT_PX;
+    const minPageHeight = isProbe ? PAGE_HEIGHT_PX : totalPagesNow * PAGE_HEIGHT_PX;
     const resumeForRender = { ...resume, minPageHeight };
 
     switch (resume?.template) {
@@ -347,14 +358,14 @@ export function ResumePreview({ resume }) {
       // Fit both width and height in focus mode
       const availableWidth = window.innerWidth - 64;
       const availableHeight = window.innerHeight - 120;
-      const scaleW = availableWidth / 794;
-      const scaleH = availableHeight / 1123;
+      const scaleW = availableWidth / PAGE_WIDTH_PX;
+      const scaleH = availableHeight / PAGE_HEIGHT_PX;
       const fitScale = Math.min(scaleW, scaleH, 1.1);
       setZoom(Math.max(0.4, Math.round(fitScale * 100) / 100));
     } else if (containerRef.current) {
       // Fit container width
       const containerWidth = containerRef.current.clientWidth - 32;
-      const fitScale = containerWidth / 794;
+      const fitScale = containerWidth / PAGE_WIDTH_PX;
       setZoom(Math.max(0.4, Math.min(1.0, Math.round(fitScale * 100) / 100)));
     }
   };
@@ -368,16 +379,16 @@ export function ResumePreview({ resume }) {
     setZoom((prev) => Math.max(0.4, Math.round((prev - 0.1) * 10) / 10));
   };
 
-  // Auto-fit on initial mount if screen is smaller than A4 sheet (794px + padding)
+  // Auto-fit on initial mount if screen is smaller than sheet (width + padding)
   useEffect(() => {
     if (containerRef.current) {
       const containerWidth = containerRef.current.clientWidth;
-      if (containerWidth > 0 && containerWidth < 820) {
-        const fitScale = (containerWidth - 28) / 794;
+      if (containerWidth > 0 && containerWidth < PAGE_WIDTH_PX + 24) {
+        const fitScale = (containerWidth - 28) / PAGE_WIDTH_PX;
         setZoom(Math.max(0.4, Math.min(1.0, Math.round(fitScale * 100) / 100)));
       }
     }
-  }, []);
+  }, [PAGE_WIDTH_PX]);
 
   // Escape key listener for Focus Mode
   useEffect(() => {
@@ -398,8 +409,8 @@ export function ResumePreview({ resume }) {
   // Scaled height for parent container so scrolling behaves smoothly
   const totalUnscaledHeight =
     totalPages === 1
-      ? A4_HEIGHT_PX
-      : totalPages * A4_HEIGHT_PX + (totalPages - 1) * PAGE_GAP_PX;
+      ? PAGE_HEIGHT_PX
+      : totalPages * PAGE_HEIGHT_PX + (totalPages - 1) * PAGE_GAP_PX;
   const scaledHeight = totalUnscaledHeight * zoom;
 
   // ── Floating Zoom Dock Component (Shared between normal and focus mode) ──
@@ -555,7 +566,7 @@ export function ResumePreview({ resume }) {
           style={{
             transform: `scale(${zoom})`,
             transformOrigin: "top center",
-            width: "794px",
+            width: `${PAGE_WIDTH_PX}px`,
           }}
           className="resume-scale-wrapper shrink-0 transition-transform duration-100"
         >
@@ -565,11 +576,17 @@ export function ResumePreview({ resume }) {
             className="flex flex-col items-center"
           >
             {Array.from({ length: totalPages }).map((_, pageIndex) => {
-              const startOffset = pageOffsets[pageIndex] ?? pageIndex * A4_HEIGHT_PX;
+              const startOffset = pageOffsets[pageIndex] ?? pageIndex * PAGE_HEIGHT_PX;
               const nextOffset = pageOffsets[pageIndex + 1];
               const isFullBleedSidebar = ["atlantic-blue", "hunter-green", "sidebar"].includes(resume?.template);
               const sheetTopPadding = (!isFullBleedSidebar && pageIndex > 0) ? 24 : 0;
-              const maxAvailableHeight = A4_HEIGHT_PX - sheetTopPadding;
+              const hasFooter = Boolean(
+                resume?.theme?.footerPageNumbers ||
+                resume?.theme?.footerEmail ||
+                resume?.theme?.footerName
+              );
+              const footerMargin = hasFooter ? 36 : 0;
+              const maxAvailableHeight = PAGE_HEIGHT_PX - sheetTopPadding - footerMargin;
 
               let sliceHeight;
               if (nextOffset != null) {
@@ -579,14 +596,22 @@ export function ResumePreview({ resume }) {
                 sliceHeight = Math.min(maxAvailableHeight, Math.max(200, remaining));
               }
 
+              const outerMarginPx =
+                resume?.theme?.pageMargin === "compact"
+                  ? 40
+                  : resume?.theme?.pageMargin === "spacious"
+                  ? 64
+                  : 48;
+
               return (
                 <div
                   key={`page-sheet-${pageIndex}`}
                   data-page-index={pageIndex + 1}
-                  className="resume-page-sheet relative w-[794px] h-[1123px] bg-white rounded-md shadow-md border border-gray-200/80 text-black overflow-hidden mb-8 last:mb-0 transition-all select-text print:shadow-none print:border-none print:mb-0 print:rounded-none"
+                  className="resume-page-sheet relative bg-white rounded-md shadow-md border border-gray-200/80 text-black overflow-hidden mb-8 last:mb-0 transition-all select-text print:shadow-none print:border-none print:mb-0 print:rounded-none"
                   style={{
-                    height: `${A4_HEIGHT_PX}px`,
-                    maxHeight: `${A4_HEIGHT_PX}px`,
+                    width: `${PAGE_WIDTH_PX}px`,
+                    height: `${PAGE_HEIGHT_PX}px`,
+                    maxHeight: `${PAGE_HEIGHT_PX}px`,
                     paddingTop: `${sheetTopPadding}px`,
                     boxSizing: "border-box",
                   }}
@@ -594,21 +619,31 @@ export function ResumePreview({ resume }) {
                   {/* Sliced Content Window: strictly 0 padding so negative margin can never peek prior page content */}
                   <div
                     style={{
+                      width: `${PAGE_WIDTH_PX}px`,
                       height: `${sliceHeight}px`,
                       maxHeight: `${maxAvailableHeight}px`,
                       overflow: "hidden",
                     }}
-                    className="w-[794px]"
                   >
                     <div
                       style={{
+                        width: `${PAGE_WIDTH_PX}px`,
                         marginTop: `-${startOffset}px`,
                       }}
-                      className="w-[794px]"
                     >
                       {renderTemplate()}
                     </div>
                   </div>
+
+                  {/* Pinned Page Sheet Footer (FlowCV style) */}
+                  {hasFooter && (
+                    <ResumeFooter
+                      resume={resume}
+                      pageIndex={pageIndex + 1}
+                      totalPages={totalPages}
+                      outerMarginPx={outerMarginPx}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -625,7 +660,7 @@ export function ResumePreview({ resume }) {
           position: "fixed",
           top: 0,
           left: "-99999px",
-          width: "794px",
+          width: `${PAGE_WIDTH_PX}px`,
           visibility: "hidden",
           opacity: 0,
           zIndex: -100,
@@ -670,16 +705,22 @@ export function ResumePreview({ resume }) {
               style={{
                 transform: `scale(${zoom})`,
                 transformOrigin: "top center",
-                width: "794px",
+                width: `${PAGE_WIDTH_PX}px`,
               }}
               className="flex flex-col items-center"
             >
               {Array.from({ length: totalPages }).map((_, pageIndex) => {
-                const startOffset = pageOffsets[pageIndex] ?? pageIndex * A4_HEIGHT_PX;
+                const startOffset = pageOffsets[pageIndex] ?? pageIndex * PAGE_HEIGHT_PX;
                 const nextOffset = pageOffsets[pageIndex + 1];
                 const isFullBleedSidebar = ["atlantic-blue", "hunter-green", "sidebar"].includes(resume?.template);
                 const sheetTopPadding = (!isFullBleedSidebar && pageIndex > 0) ? 24 : 0;
-                const maxAvailableHeight = A4_HEIGHT_PX - sheetTopPadding;
+                const hasFooter = Boolean(
+                  resume?.theme?.footerPageNumbers ||
+                  resume?.theme?.footerEmail ||
+                  resume?.theme?.footerName
+                );
+                const footerMargin = hasFooter ? 36 : 0;
+                const maxAvailableHeight = PAGE_HEIGHT_PX - sheetTopPadding - footerMargin;
 
                 let sliceHeight;
                 if (nextOffset != null) {
@@ -689,34 +730,52 @@ export function ResumePreview({ resume }) {
                   sliceHeight = Math.min(maxAvailableHeight, Math.max(200, remaining));
                 }
 
+                const outerMarginPx =
+                  resume?.theme?.pageMargin === "compact"
+                    ? 40
+                    : resume?.theme?.pageMargin === "spacious"
+                    ? 64
+                    : 48;
+
                 return (
                   <div
                     key={`focus-sheet-${pageIndex}`}
-                    className="resume-page-sheet relative w-[794px] h-[1123px] bg-white rounded-md shadow-2xl border border-gray-200/80 text-black overflow-hidden mb-8 last:mb-0"
+                    className="resume-page-sheet relative bg-white rounded-md shadow-2xl border border-gray-200/80 text-black overflow-hidden mb-8 last:mb-0"
                     style={{
-                      height: `${A4_HEIGHT_PX}px`,
-                      maxHeight: `${A4_HEIGHT_PX}px`,
+                      width: `${PAGE_WIDTH_PX}px`,
+                      height: `${PAGE_HEIGHT_PX}px`,
+                      maxHeight: `${PAGE_HEIGHT_PX}px`,
                       paddingTop: `${sheetTopPadding}px`,
                       boxSizing: "border-box",
                     }}
                   >
                     <div
                       style={{
+                        width: `${PAGE_WIDTH_PX}px`,
                         height: `${sliceHeight}px`,
                         maxHeight: `${maxAvailableHeight}px`,
                         overflow: "hidden",
                       }}
-                      className="w-[794px]"
                     >
                       <div
                         style={{
+                          width: `${PAGE_WIDTH_PX}px`,
                           marginTop: `-${startOffset}px`,
                         }}
-                        className="w-[794px]"
                       >
                         {renderTemplate()}
                       </div>
                     </div>
+
+                    {/* Pinned Page Sheet Footer in Focus Mode */}
+                    {hasFooter && (
+                      <ResumeFooter
+                        resume={resume}
+                        pageIndex={pageIndex + 1}
+                        totalPages={totalPages}
+                        outerMarginPx={outerMarginPx}
+                      />
+                    )}
                   </div>
                 );
               })}

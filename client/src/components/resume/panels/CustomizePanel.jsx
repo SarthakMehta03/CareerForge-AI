@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Check,
   Palette,
@@ -346,23 +346,132 @@ export function CustomizePanel() {
     setDragOverPanelIndex(null);
   };
 
+  // Scroll synchronization & ScrollSpy refs
+  const subNavContainerRef = useRef(null);
+  const isScrollingFromClickRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
+
+  // Synchronize left subnav toggle as user scrolls through middle cards
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isScrollingFromClickRef.current) return;
+
+      const triggerPoint = 140; // viewport top offset in px (below workspace header)
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // When scrolled near the very bottom, highlight the last visible subnav section
+      if (scrollY + windowHeight >= documentHeight - 60) {
+        for (let i = subNavItems.length - 1; i >= 0; i--) {
+          const el = document.getElementById(`customize-sec-${subNavItems[i].id}`);
+          if (el) {
+            setActiveSubNav(subNavItems[i].id);
+            return;
+          }
+        }
+      }
+
+      // Detect which section card is currently intersecting the trigger line
+      let currentActive = null;
+      for (const item of subNavItems) {
+        const el = document.getElementById(`customize-sec-${item.id}`);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= triggerPoint && rect.bottom > triggerPoint) {
+          currentActive = item.id;
+          break;
+        }
+      }
+
+      // Fallback: choose section closest to trigger point
+      if (!currentActive) {
+        if (scrollY < 120) {
+          currentActive = "document";
+        } else {
+          let minDistance = Infinity;
+          for (const item of subNavItems) {
+            const el = document.getElementById(`customize-sec-${item.id}`);
+            if (!el) continue;
+            const rect = el.getBoundingClientRect();
+            const dist = Math.abs(rect.top - triggerPoint);
+            if (dist < minDistance) {
+              minDistance = dist;
+              currentActive = item.id;
+            }
+          }
+        }
+      }
+
+      if (currentActive) {
+        setActiveSubNav(currentActive);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Run once on mount to establish active position immediately
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, []);
+
+  // Ensure active subnav button remains visible inside sidebar container if overflow occurs
+  useEffect(() => {
+    const container = subNavContainerRef.current;
+    if (!container) return;
+    const activeBtn = container.querySelector(`[data-subnav-id="${activeSubNav}"]`);
+    if (!activeBtn) return;
+
+    const cTop = container.scrollTop;
+    const cHeight = container.clientHeight;
+    const btnTop = activeBtn.offsetTop - container.offsetTop;
+    const btnHeight = activeBtn.offsetHeight;
+
+    if (btnTop < cTop) {
+      container.scrollTo({ top: btnTop, behavior: "smooth" });
+    } else if (btnTop + btnHeight > cTop + cHeight) {
+      container.scrollTo({ top: btnTop + btnHeight - cHeight, behavior: "smooth" });
+    }
+  }, [activeSubNav]);
+
   const scrollToSection = (secId) => {
     setActiveSubNav(secId);
+    isScrollingFromClickRef.current = true;
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
     const elem = document.getElementById(`customize-sec-${secId}`);
     if (elem) {
-      elem.scrollIntoView({ behavior: "smooth", block: "start" });
+      const headerOffset = 80; // Account for sticky header height & top spacing
+      const elementPosition = elem.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: "smooth",
+      });
     }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingFromClickRef.current = false;
+    }, 700);
   };
 
   return (
     <div className="flex items-start gap-4 animate-in fade-in duration-200">
       {/* ── FlowCV Left Vertical Sub-Navigation Sidebar ── */}
-      <div className="w-36 shrink-0 bg-white border border-gray-200 rounded-2xl p-3 shadow-xs sticky top-20 space-y-1 text-xs">
+      <div
+        ref={subNavContainerRef}
+        className="w-36 shrink-0 bg-white border border-gray-200 rounded-2xl p-3 shadow-xs sticky top-20 space-y-1 text-xs max-h-[calc(100vh-6rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {subNavItems.map((item) => {
           const isActive = activeSubNav === item.id;
           return (
             <button
               key={item.id}
+              data-subnav-id={item.id}
               type="button"
               onClick={() => scrollToSection(item.id)}
               className={`w-full text-left px-3 py-2 rounded-xl font-semibold transition cursor-pointer flex items-center justify-between ${
