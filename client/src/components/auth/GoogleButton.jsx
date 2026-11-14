@@ -2,10 +2,11 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { googleLoginUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
 
 function GoogleButton() {
   const navigate = useNavigate();
+  const { googleLogin } = useAuth();
 
   const handleGoogleSuccess = async (tokenResponse) => {
     try {
@@ -22,7 +23,7 @@ function GoogleButton() {
         return;
       }
 
-      const res = await googleLoginUser({ userInfo });
+      const res = await googleLogin({ userInfo });
 
       if (res.data.success) {
         toast.success("Google Login Successful!");

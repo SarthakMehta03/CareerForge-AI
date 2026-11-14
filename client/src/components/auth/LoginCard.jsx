@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { Mail, RefreshCw } from "lucide-react";
 
 import InputField from "./InputField";
 import Button from "./Button";
@@ -9,10 +10,13 @@ import Divider from "./Divider";
 import GoogleButton from "./GoogleButton";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
-import { loginUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
+import { resendVerificationEmail } from "../../services/authService";
 
 function LoginCard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -21,21 +25,36 @@ function LoginCard() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resending, setResending] = useState(false);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+
+    try {
+      setResending(true);
+      const res = await resendVerificationEmail(unverifiedEmail);
+      toast.success(res.data?.message || "Verification email resent! Check your Gmail.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to resend verification email.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
+    setUnverifiedEmail("");
 
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields.");
@@ -44,20 +63,21 @@ function LoginCard() {
 
     try {
       setLoading(true);
-
-      const res = await loginUser(formData);
-
-      localStorage.setItem("token", res.data.token);
-
+      await login(formData);
       toast.success("Login Successful");
 
-      navigate("/dashboard");
-
+      // Redirect to where user came from, or dashboard
+      const redirectTo = location.state?.from?.pathname || "/dashboard";
+      navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Invalid email or password."
-      );
+      if (err.response?.data?.isUnverified) {
+        setUnverifiedEmail(err.response.data.email || formData.email);
+        setError(err.response.data.message || "Please verify your email before logging in.");
+      } else {
+        setError(
+          err.response?.data?.message || "Invalid email or password."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -76,13 +96,28 @@ function LoginCard() {
         </h2>
 
         <p className="mt-2 text-center text-gray-500">
-          Login to continue your interview preparation
+          Sign in to continue building your career
         </p>
 
         <form className="mt-8" onSubmit={handleSubmit}>
           {error && (
-            <div className="mb-4 rounded-lg bg-red-100 border border-red-300 p-3 text-red-700 text-sm">
-              {error}
+            <div className={`mb-4 rounded-xl p-3 text-sm border ${
+              unverifiedEmail
+                ? "bg-amber-50 border-amber-200 text-amber-800"
+                : "bg-red-50 border-red-200 text-red-700"
+            }`}>
+              <p>{error}</p>
+              {unverifiedEmail && (
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-200/60 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  <RefreshCw size={12} className={resending ? "animate-spin" : ""} />
+                  <span>{resending ? "Sending link..." : "Resend Verification Email"}</span>
+                </button>
+              )}
             </div>
           )}
 

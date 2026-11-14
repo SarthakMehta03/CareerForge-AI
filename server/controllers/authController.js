@@ -8,53 +8,124 @@ const sendEmail = require('../utils/sendEmail');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const registerUser = async (req, res) => {
-    try{
-         const {name,email,password} = req.body;
+  try {
+    const { name, email, password } = req.body;
 
-         if (!name || !email || !password ) {
-            return res.status(400).json({
-                success: false,
-                message: 'All fields are required'
-            });
-         }
-
-         const existingUser = await User.findOne({email});
-         if(existingUser){
-            return res.status(409).json({
-                success: false,
-                message: 'User already exists'
-            });
-         }
-
-         const salt = await bcrypt.genSalt(10);
-         const hashedPassword = await bcrypt.hash(password,salt);
-
-         const user = new User({
-            name,
-            email,
-            password: hashedPassword
-         });
-
-         await user.save();
-
-         res.status(201).json({
-            success: true,
-            message: 'User registered successfully',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-         });
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
-    catch (error) {
-        console.error("Register Error:", error);
-        res.status(500).json({
-            success: false, 
-            message: 'Server error' 
-        });
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: trimmedEmail });
+
+    if (existingUser && existingUser.isVerified) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email address already exists. Please log in.",
+      });
     }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    let user;
+    if (existingUser && !existingUser.isVerified) {
+      // User registered earlier but never verified - update and resend
+      existingUser.name = name.trim();
+      existingUser.password = hashedPassword;
+      existingUser.verificationToken = hashedToken;
+      existingUser.verificationTokenExpire = tokenExpire;
+      existingUser.verificationCode = verificationCode;
+      existingUser.verificationCodeExpire = tokenExpire;
+      user = await existingUser.save();
+    } else {
+      user = new User({
+        name: name.trim(),
+        email: trimmedEmail,
+        password: hashedPassword,
+        isVerified: false,
+        verificationToken: hashedToken,
+        verificationTokenExpire: tokenExpire,
+        verificationCode,
+        verificationCodeExpire: tokenExpire,
+      });
+      await user.save();
+    }
+
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:5173";
+    const backendBase = process.env.BACKEND_URL || "http://localhost:5000";
+    const verifyUrl = `${frontendBase}/verify-email/${rawToken}`;
+    const directVerifyUrl = `${backendBase}/api/auth/verify/${rawToken}`;
+
+    const messageHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #111827; text-align: center; margin-bottom: 8px;">🚀 CareerForge-AI</h2>
+        <p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0;">AI-Powered Career & Interview Preparation</p>
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;" />
+        <p style="font-size: 16px; color: #374151;">Hello <strong>${user.name}</strong>,</p>
+        <p style="font-size: 15px; color: #4b5563; line-height: 1.5;">
+          Thank you for signing up for CareerForge-AI! Enter this 6-digit verification code on your computer, or click the verification button below:
+        </p>
+        
+        <!-- 6-Digit Code Box (Works from phone!) -->
+        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+          <p style="font-size: 12px; color: #64748b; margin: 0 0 6px 0; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Your 6-Digit Verification Code</p>
+          <div style="font-size: 34px; font-weight: 900; letter-spacing: 8px; color: #0f172a; font-family: monospace;">${verificationCode}</div>
+          <p style="font-size: 11px; color: #94a3b8; margin: 6px 0 0 0;">Enter this code on your computer screen</p>
+        </div>
+
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${verifyUrl}" target="_blank" style="background-color: #000000; color: #ffffff; padding: 14px 32px; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Verify Email Address (PC)
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #6b7280; line-height: 1.4;">
+          This verification code and link will expire in <strong>24 hours</strong>. If you did not create an account on CareerForge-AI, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #9ca3af; word-break: break-all;">
+          If opening on your computer, paste this URL:<br/>
+          <a href="${verifyUrl}" style="color: #4f46e5;">${verifyUrl}</a>
+        </p>
+      </div>
+    `;
+
+    const emailResult = await sendEmail({
+      email: user.email,
+      subject: "CareerForge-AI - Verify Your Email Address",
+      text: `Verify your email by visiting this link: ${verifyUrl}`,
+      html: messageHtml,
+    });
+
+    console.log(`\n========================================`);
+    console.log(`[EMAIL VERIFICATION SENT] User: ${user.email}`);
+    console.log(`Email Sent: ${emailResult.sent ? "YES" : "NO (Check SMTP config)"}`);
+    console.log(`Verify URL: ${verifyUrl}`);
+    console.log(`========================================\n`);
+
+    res.status(201).json({
+      success: true,
+      message: emailResult.sent
+        ? "Registration successful! A verification email has been sent to your Gmail. Please verify your email to log in."
+        : "Registration successful! Please check your email to verify your account.",
+      email: user.email,
+      emailSent: emailResult.sent,
+    });
+  } catch (error) {
+    console.error("Register Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during registration",
+    });
+  }
 };
 
 
@@ -94,6 +165,15 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        isUnverified: true,
+        email: user.email,
+        message: "Your email is not verified yet. Please check your Gmail or resend the verification link.",
+      });
+    }
+
     const token = jwt.sign(
       {
         id: user._id,
@@ -115,6 +195,7 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         avatar: user.avatar,
+        isVerified: user.isVerified,
       },
     });
 
@@ -190,9 +271,11 @@ const googleLogin = async (req, res) => {
         email,
         googleId: googleId || `google_${Date.now()}`,
         avatar: avatar || "",
+        isVerified: true,
       });
       await user.save();
     } else {
+      user.isVerified = true;
       if (!user.googleId) user.googleId = googleId;
       if (!user.avatar && avatar) user.avatar = avatar;
       await user.save();
@@ -269,7 +352,8 @@ const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const frontendResetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendResetUrl = `${frontendBase}/reset-password/${resetToken}`;
 
     const messageHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
@@ -382,6 +466,312 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification token is required",
+      });
+    }
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      verificationToken: hashedToken,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification link. Please request a new verification email.",
+      });
+    }
+
+    // Check expiration only if user is not already verified
+    if (!user.isVerified && user.verificationTokenExpire < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: "This verification link has expired. Please request a new verification email.",
+      });
+    }
+
+    // Mark as verified if not yet verified
+    if (!user.isVerified) {
+      user.isVerified = true;
+      await user.save();
+    }
+
+    const appToken = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully! Welcome to CareerForge-AI.",
+      token: appToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        isVerified: true,
+      },
+    });
+  } catch (error) {
+    console.error("Verify Email Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while verifying email",
+    });
+  }
+};
+
+const verifyCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and 6-digit verification code are required",
+      });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedCode = code.trim();
+
+    const user = await User.findOne({ email: trimmedEmail });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email address",
+      });
+    }
+
+    if (user.isVerified) {
+      const appToken = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Account is already verified!",
+        token: appToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          isVerified: true,
+        },
+      });
+    }
+
+    if (!user.verificationCode || user.verificationCode !== trimmedCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification code. Please check your Gmail and try again.",
+      });
+    }
+
+    if (user.verificationCodeExpire && user.verificationCodeExpire < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification code has expired. Please click 'Resend' to receive a new code.",
+      });
+    }
+
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    user.verificationCodeExpire = undefined;
+    await user.save();
+
+    const appToken = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully! Welcome to CareerForge-AI.",
+      token: appToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        isVerified: true,
+      },
+    });
+  } catch (error) {
+    console.error("Verify Code Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while verifying code",
+    });
+  }
+};
+
+const directVerifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:5173";
+
+    if (!token) {
+      return res.redirect(`${frontendBase}/login`);
+    }
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({ verificationToken: hashedToken });
+
+    if (user && !user.isVerified) {
+      user.isVerified = true;
+      await user.save();
+    }
+
+    return res.redirect(`${frontendBase}/verify-email/${token}`);
+  } catch (error) {
+    console.error("Direct Verify Error:", error);
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:5173";
+    return res.redirect(`${frontendBase}/login`);
+  }
+};
+
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email address is required",
+      });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: trimmedEmail });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email address",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "This account is already verified. You can log in directly.",
+      });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    user.verificationToken = hashedToken;
+    user.verificationTokenExpire = tokenExpire;
+    user.verificationCode = verificationCode;
+    user.verificationCodeExpire = tokenExpire;
+    await user.save();
+
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:5173";
+    const backendBase = process.env.BACKEND_URL || "http://localhost:5000";
+    const verifyUrl = `${frontendBase}/verify-email/${rawToken}`;
+    const directVerifyUrl = `${backendBase}/api/auth/verify/${rawToken}`;
+
+    const messageHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #111827; text-align: center; margin-bottom: 8px;">🚀 CareerForge-AI</h2>
+        <p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0;">AI-Powered Career & Interview Preparation</p>
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;" />
+        <p style="font-size: 16px; color: #374151;">Hello <strong>${user.name}</strong>,</p>
+        <p style="font-size: 15px; color: #4b5563; line-height: 1.5;">
+          You requested a new verification link for your CareerForge-AI account. Enter this 6-digit code on your computer, or click the verification button below:
+        </p>
+        
+        <!-- 6-Digit Code Box (Works from phone!) -->
+        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+          <p style="font-size: 12px; color: #64748b; margin: 0 0 6px 0; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Your 6-Digit Verification Code</p>
+          <div style="font-size: 34px; font-weight: 900; letter-spacing: 8px; color: #0f172a; font-family: monospace;">${verificationCode}</div>
+          <p style="font-size: 11px; color: #94a3b8; margin: 6px 0 0 0;">Enter this code on your computer screen</p>
+        </div>
+
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${verifyUrl}" target="_blank" style="background-color: #000000; color: #ffffff; padding: 14px 32px; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Verify Email Address (PC)
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #6b7280; line-height: 1.4;">
+          This verification code and link will expire in <strong>24 hours</strong>. If you did not request this, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #9ca3af; word-break: break-all;">
+          If opening on your computer, paste this URL:<br/>
+          <a href="${verifyUrl}" style="color: #4f46e5;">${verifyUrl}</a>
+        </p>
+      </div>
+    `;
+
+    const emailResult = await sendEmail({
+      email: user.email,
+      subject: "CareerForge-AI - Verify Your Email Address",
+      text: `Verify your email by visiting this link: ${verifyUrl}`,
+      html: messageHtml,
+    });
+
+    console.log(`\n========================================`);
+    console.log(`[RESEND VERIFICATION SENT] User: ${user.email}`);
+    console.log(`Email Sent: ${emailResult.sent ? "YES" : "NO (Check SMTP config)"}`);
+    console.log(`Verify URL: ${verifyUrl}`);
+    console.log(`========================================\n`);
+
+    res.status(200).json({
+      success: true,
+      message: emailResult.sent
+        ? "A new verification email has been sent to your Gmail inbox. Please check your email."
+        : "New verification link generated.",
+      emailSent: emailResult.sent,
+      verifyUrl,
+    });
+  } catch (error) {
+    console.error("Resend Verification Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while resending verification email",
+    });
+  }
+};
+
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -410,5 +800,9 @@ module.exports = {
   googleLogin,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  verifyCode,
+  directVerifyEmail,
+  resendVerification,
   getMe,
 };

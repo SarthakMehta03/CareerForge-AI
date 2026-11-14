@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import ResumeManagement from "./pages/ResumeManagement";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import TemplateSelectionPage from "./pages/TemplateSelectionPage";
@@ -26,6 +27,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/verify-email/:token" element={<VerifyEmail />} />
       <Route path="/view/:id" element={<PublicResumeView />} />
       <Route path="/share/:id" element={<PublicResumeView />} />
 
