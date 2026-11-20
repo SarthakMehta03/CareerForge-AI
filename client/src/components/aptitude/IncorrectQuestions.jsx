@@ -41,10 +41,10 @@ function IncorrectQuestions({ evaluatedQuestions = [] }) {
               key={tab.id}
               type="button"
               onClick={() => setFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 filter === tab.id
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-gray-900 text-white dark:bg-blue-600 dark:text-white font-bold shadow-xs"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#1c2234] dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               {tab.label}

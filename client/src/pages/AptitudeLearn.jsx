@@ -7,50 +7,75 @@ import {
   FileText,
   AlertTriangle,
   Lightbulb,
-  CheckCircle2,
 } from "lucide-react";
 
 import Navbar from "../components/auth/Navbar";
-import { getTopicById, ALL_TOPICS } from "../data/aptitudeTopics";
+import WorkedExampleCard from "../components/aptitude/WorkedExampleCard";
+import { getTopicById } from "../data/aptitudeTopics";
 import { getConceptByTopicId } from "../data/aptitudeConcepts";
-import { getFilteredQuestions } from "../services/aptitudeService";
 
 function AptitudeLearn() {
   const { topicId } = useParams();
 
   // Find topic metadata
   const topic = useMemo(() => {
-    return getTopicById(topicId) || ALL_TOPICS[0];
+    return getTopicById(topicId);
   }, [topicId]);
 
   // Concept data
   const concept = useMemo(() => {
+    if (!topic) return null;
     return getConceptByTopicId(topic.id, topic);
   }, [topic]);
 
-  // Preview questions for this topic
-  const previewQuestions = useMemo(() => {
-    return getFilteredQuestions({ topic: topic.id, limit: 2 });
-  }, [topic.id]);
+  // Empty/Error state when topic is not found
+  if (!topic || !concept) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center justify-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 border border-amber-200">
+            <AlertTriangle size={28} />
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            Topic Guide Not Found
+          </h1>
+          <p className="text-sm text-gray-600 max-w-md mb-6 leading-relaxed">
+            The aptitude topic &ldquo;{topicId}&rdquo; could not be located in our learning directory. It may have been renamed or moved.
+          </p>
+          <Link
+            to="/aptitude/topics"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition shadow-sm cursor-pointer"
+          >
+            <ChevronLeft size={14} />
+            Browse All Aptitude Topics
+          </Link>
+        </main>
+      </div>
+    );
+  }
+
+  const isQuant = topic.category === "quantitative";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
           <Link
-            to="/aptitude/topics"
+            to={`/aptitude/topics?category=${topic.category}`}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black transition"
           >
             <ChevronLeft size={16} />
-            Back to Topics
+            Back to {topic.category.charAt(0).toUpperCase() + topic.category.slice(1)} Topics
           </Link>
 
           <Link
             to={`/aptitude/practice/${topic.id}`}
-            className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs"
+            className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
+            aria-label={`Start practice for ${topic.name}`}
           >
             <Play size={13} />
             Start Practice
@@ -89,7 +114,7 @@ function AptitudeLearn() {
                 Core Concept Breakdown
               </h2>
               <p className="text-xs text-gray-500">
-                Foundational rules and structural concepts
+                Foundational rules, definitions, and structural principles
               </p>
             </div>
           </div>
@@ -108,7 +133,7 @@ function AptitudeLearn() {
           </div>
         </div>
 
-        {/* Important Formulas Sheet */}
+        {/* Formulas / Rules Sheet */}
         {concept.formulas && concept.formulas.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
@@ -117,10 +142,12 @@ function AptitudeLearn() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  Important Formulas & Rules
+                  {isQuant ? "Important Formulas & Rules" : "Core Rules & Heuristics"}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Essential mathematical relationships and identity theorems
+                  {isQuant
+                    ? "Essential mathematical equations, theorems, and conditions"
+                    : "Key logical rules, structural invariants, and solving methods"}
                 </p>
               </div>
             </div>
@@ -134,9 +161,14 @@ function AptitudeLearn() {
                   <span className="text-xs font-semibold text-gray-500">
                     {f.name}
                   </span>
-                  <span className="font-mono text-xs sm:text-sm font-bold text-gray-900 mt-2 bg-white px-3 py-2 rounded-lg border border-gray-200 block">
+                  <div className="font-mono text-xs sm:text-sm font-bold text-gray-900 mt-2 bg-white px-3 py-2.5 rounded-lg border border-gray-200 break-words whitespace-pre-wrap overflow-x-auto leading-relaxed">
                     {f.formula}
-                  </span>
+                  </div>
+                  {f.explanation && (
+                    <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                      {f.explanation}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -152,35 +184,21 @@ function AptitudeLearn() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  Solved Examples
+                  Worked Examples
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Step-by-step worked solutions for typical exam questions
+                  Step-by-step worked solutions for typical recruitment exam problems
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {concept.solvedExamples.map((ex, idx) => (
-                <div
+                <WorkedExampleCard
                   key={idx}
-                  className="border border-gray-200 rounded-xl overflow-hidden"
-                >
-                  <div className="p-4 bg-gray-50/70 border-b border-gray-200">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                      Example {idx + 1}
-                    </span>
-                    <p className="text-xs sm:text-sm font-semibold text-gray-900 leading-relaxed">
-                      {ex.problem}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-white text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line space-y-2">
-                    <span className="font-bold text-xs uppercase tracking-wider text-emerald-700 block">
-                      Solution:
-                    </span>
-                    <p className="text-gray-600">{ex.solution}</p>
-                  </div>
-                </div>
+                  example={ex}
+                  exampleIndex={idx + 1}
+                />
               ))}
             </div>
           </div>
@@ -195,10 +213,10 @@ function AptitudeLearn() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  Common Pitfalls & Exam Mistakes
+                  Common Pitfalls & Exam Traps
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Avoid these frequent student traps during competitive tests
+                  Frequent student errors to avoid during competitive aptitude tests
                 </p>
               </div>
             </div>
@@ -221,7 +239,7 @@ function AptitudeLearn() {
         <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-bold text-gray-900">
-              Ready to test your understanding?
+              Ready to test your understanding of {topic.name}?
             </h3>
             <p className="text-xs text-gray-500 mt-1">
               Apply what you have learned with verified MCQs and instant feedback.
@@ -230,7 +248,8 @@ function AptitudeLearn() {
 
           <Link
             to={`/aptitude/practice/${topic.id}`}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-xs"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-xs cursor-pointer"
+            aria-label={`Start practice for ${topic.name}`}
           >
             <Play size={14} />
             Start Topic Practice

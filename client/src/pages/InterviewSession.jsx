@@ -99,7 +99,7 @@ function InterviewSession() {
       setSession(updated);
       try {
         localStorage.setItem(STORAGE_KEYS.CURRENT_SESSION, JSON.stringify(updated));
-      } catch (_) {}
+      } catch (_) { }
     } else {
       const currentQ = session.questions[currentIdx];
       if (currentQ) {
@@ -437,7 +437,7 @@ function InterviewSession() {
   // Render Session Summary Screen
   if (sessionState === "summary" && finalSummary) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
         <Navbar />
         <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <SessionSummaryCard
@@ -466,23 +466,23 @@ function InterviewSession() {
   // Render Summarizing Loading Screen
   if (sessionState === "summarizing") {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
         <Navbar />
         <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
-          <div className="bg-white border border-gray-200 rounded-3xl p-8 sm:p-10 shadow-sm space-y-5 max-w-md w-full">
-            <div className="w-16 h-16 rounded-2xl bg-black text-white flex items-center justify-center mx-auto shadow-md">
-              <Sparkles size={28} className="animate-pulse" />
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 sm:p-10 shadow-sm space-y-5 max-w-md w-full">
+            <div className="w-16 h-16 rounded-2xl bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 text-white dark:text-blue-400 flex items-center justify-center mx-auto shadow-md">
+              <Sparkles size={28} className="animate-pulse text-blue-500 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 Compiling Session Debrief
               </h2>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                 Google Gemini AI is synthesizing your answers across accuracy, depth, clarity, and role competencies...
               </p>
             </div>
-            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-              <div className="bg-black h-full rounded-full animate-pulse w-3/4" />
+            <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+              <div className="bg-gray-900 dark:bg-blue-500 h-full rounded-full animate-pulse w-3/4" />
             </div>
           </div>
         </main>
@@ -491,7 +491,7 @@ function InterviewSession() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
@@ -641,7 +641,7 @@ function InterviewSession() {
           {/* 2. Evaluating State Loader */}
           {sessionState === "evaluating" && (
             <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 text-white dark:text-blue-400 flex items-center justify-center shadow-xs">
                 <Loader2 size={24} className="animate-spin" />
               </div>
               <div>
@@ -653,7 +653,7 @@ function InterviewSession() {
                 </p>
               </div>
               <div className="w-48 bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-black h-full rounded-full animate-pulse w-2/3" />
+                <div className="bg-gray-900 dark:bg-blue-500 h-full rounded-full animate-pulse w-2/3" />
               </div>
             </div>
           )}
@@ -795,7 +795,7 @@ function InterviewSession() {
               <button
                 type="button"
                 onClick={handleFinishSession}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-black text-white text-xs font-bold hover:bg-gray-900 transition cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-black"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-bold transition cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 Finish Session & View Results
               </button>

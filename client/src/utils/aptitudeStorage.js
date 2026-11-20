@@ -1,85 +1,149 @@
 /**
  * Aptitude Browser Storage Helper
- * Provides safe, robust wrappers around localStorage without breaking if storage is disabled or quota exceeded.
- * Clearly documents that storage is client-side prototype persistence.
+ * Provides user-scoped, isolated storage for aptitude assessments.
+ *
+ * Guarantees:
+ * 1. Each signed-in user's test history and practice progress is strictly isolated by stable user ID.
+ * 2. Guest test attempts never appear in signed-in user accounts.
+ * 3. Switching accounts in the same browser completely separates test history.
+ * 4. Ownership verification prevents cross-account result review.
  */
 
 import { STORAGE_KEYS } from "../constants/aptitudeConstants";
+import {
+  getActiveUserScope,
+  getScopedKey,
+  safeGet,
+  safeSet,
+  safeRemove,
+  migrateLegacyAssessments,
+} from "./userStorageScope";
 
-const safeGetItem = (key, fallback = null) => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (err) {
-    console.warn(`[AptitudeStorage] Error reading key "${key}":`, err);
-    return fallback;
-  }
-};
-
-const safeSetItem = (key, value) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-    return true;
-  } catch (err) {
-    console.warn(`[AptitudeStorage] Error writing key "${key}":`, err);
-    return false;
-  }
-};
-
-const safeRemoveItem = (key) => {
-  try {
-    localStorage.removeItem(key);
-    return true;
-  } catch (err) {
-    console.warn(`[AptitudeStorage] Error removing key "${key}":`, err);
-    return false;
-  }
-};
+// Run safe legacy migration on load
+migrateLegacyAssessments();
 
 /* --- Active Test Session --- */
 export const getActiveTestSession = () => {
-  return safeGetItem(STORAGE_KEYS.CURRENT_TEST_SESSION, null);
+  const key = getScopedKey(STORAGE_KEYS.CURRENT_TEST_SESSION);
+  const session = safeGet(key, null);
+  if (!session) return null;
+
+  const { isGuest, userId } = getActiveUserScope();
+  // Ensure session belongs to the current scope
+  if (!isGuest && session.userId && session.userId !== userId) {
+    return null;
+  }
+  if (isGuest && session.userId) {
+    return null;
+  }
+  return session;
 };
 
 export const saveActiveTestSession = (session) => {
-  return safeSetItem(STORAGE_KEYS.CURRENT_TEST_SESSION, session);
+  if (!session) return false;
+  const { isGuest, userId, accountId, userEmail } = getActiveUserScope();
+  const stampedSession = {
+    ...session,
+    userId: isGuest ? null : userId,
+    userAccountId: isGuest ? null : accountId,
+    userEmail: isGuest ? null : userEmail,
+  };
+  const key = getScopedKey(STORAGE_KEYS.CURRENT_TEST_SESSION);
+  return safeSet(key, stampedSession);
 };
 
 export const clearActiveTestSession = () => {
-  return safeRemoveItem(STORAGE_KEYS.CURRENT_TEST_SESSION);
+  const key = getScopedKey(STORAGE_KEYS.CURRENT_TEST_SESSION);
+  return safeRemove(key);
 };
 
 /* --- History & Results --- */
 export const getAptitudeHistory = () => {
-  const history = safeGetItem(STORAGE_KEYS.TEST_HISTORY, []);
-  return Array.isArray(history) ? history : [];
+  const { isGuest, userId, accountId } = getActiveUserScope();
+  const key = getScopedKey(STORAGE_KEYS.TEST_HISTORY);
+  const rawHistory = safeGet(key, []);
+
+  if (!Array.isArray(rawHistory)) return [];
+
+  // Defense-in-depth: enforce strict ownership matching on each record
+  return rawHistory.filter((item) => {
+    if (!item) return false;
+    if (isGuest) {
+      // Guest scope: only show records without a registered user ID
+      return !item.userId || item.userId === "guest";
+    }
+    // Authenticated scope: must match user's ID or accountId
+    return item.userId === userId || (accountId && item.userAccountId === accountId);
+  });
 };
 
 export const saveAptitudeResult = (result) => {
+  if (!result) return result;
+  const { isGuest, userId, accountId, userEmail } = getActiveUserScope();
+
+  const stampedResult = {
+    ...result,
+    userId: isGuest ? null : userId,
+    userAccountId: isGuest ? null : accountId,
+    userEmail: isGuest ? null : userEmail,
+    savedAt: new Date().toISOString(),
+  };
+
+  const keyHistory = getScopedKey(STORAGE_KEYS.TEST_HISTORY);
+  const keyLatest = getScopedKey(STORAGE_KEYS.LATEST_RESULT);
+
   const history = getAptitudeHistory();
-  const updatedHistory = [result, ...history];
-  safeSetItem(STORAGE_KEYS.TEST_HISTORY, updatedHistory);
-  safeSetItem(STORAGE_KEYS.LATEST_RESULT, result);
-  return result;
+  const updatedHistory = [
+    stampedResult,
+    ...history.filter((h) => h.id !== stampedResult.id),
+  ];
+
+  safeSet(keyHistory, updatedHistory);
+  safeSet(keyLatest, stampedResult);
+
+  return stampedResult;
 };
 
 export const getResultById = (id) => {
   if (!id) return null;
-  const latest = safeGetItem(STORAGE_KEYS.LATEST_RESULT, null);
-  if (latest && latest.id === id) return latest;
+  const { isGuest, userId, accountId } = getActiveUserScope();
+
+  // Check latest result first
+  const latestKey = getScopedKey(STORAGE_KEYS.LATEST_RESULT);
+  const latest = safeGet(latestKey, null);
+  if (latest && latest.id === id) {
+    if (isGuest && (!latest.userId || latest.userId === "guest")) return latest;
+    if (!isGuest && (latest.userId === userId || (accountId && latest.userAccountId === accountId))) {
+      return latest;
+    }
+  }
+
+  // Check user-scoped history
   const history = getAptitudeHistory();
-  return history.find((h) => h.id === id) || null;
+  const found = history.find((h) => h.id === id);
+  if (!found) return null;
+
+  // Strict ownership verification
+  if (isGuest) {
+    return !found.userId || found.userId === "guest" ? found : null;
+  }
+
+  const isOwner = found.userId === userId || (accountId && found.userAccountId === accountId);
+  return isOwner ? found : null;
 };
 
 export const clearAptitudeHistory = () => {
-  safeRemoveItem(STORAGE_KEYS.TEST_HISTORY);
-  safeRemoveItem(STORAGE_KEYS.LATEST_RESULT);
+  const keyHistory = getScopedKey(STORAGE_KEYS.TEST_HISTORY);
+  const keyLatest = getScopedKey(STORAGE_KEYS.LATEST_RESULT);
+  safeRemove(keyHistory);
+  safeRemove(keyLatest);
   return true;
 };
 
 /* --- Practice Mode Progress --- */
 export const getPracticeProgress = () => {
-  return safeGetItem(STORAGE_KEYS.PRACTICE_PROGRESS, {});
+  const key = getScopedKey(STORAGE_KEYS.PRACTICE_PROGRESS);
+  return safeGet(key, {});
 };
 
 export const updatePracticeTopicProgress = (topicId, { attempted = 0, correct = 0 }) => {
@@ -93,11 +157,12 @@ export const updatePracticeTopicProgress = (topicId, { attempted = 0, correct = 
       lastPracticed: new Date().toISOString(),
     },
   };
-  safeSetItem(STORAGE_KEYS.PRACTICE_PROGRESS, updated);
+  const key = getScopedKey(STORAGE_KEYS.PRACTICE_PROGRESS);
+  safeSet(key, updated);
   return updated;
 };
 
-/* --- Aggregate User Statistics --- */
+/* --- Aggregate User Statistics (Scoped to Active User) --- */
 export const getAptitudeAggregateStats = () => {
   const history = getAptitudeHistory();
   const practiceProgress = getPracticeProgress();
@@ -136,19 +201,35 @@ export const getAptitudeAggregateStats = () => {
 
   const totalAttempted = practiceAttempted + testAttempted;
   const totalCorrect = practiceCorrect + testCorrect;
-  const overallAccuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+  const overallAccuracy =
+    totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
 
-  const quantAcc = categoryStats.quantitative.attempted > 0
-    ? Math.round((categoryStats.quantitative.correct / categoryStats.quantitative.attempted) * 100)
-    : 0;
+  const quantAcc =
+    categoryStats.quantitative.attempted > 0
+      ? Math.round(
+          (categoryStats.quantitative.correct /
+            categoryStats.quantitative.attempted) *
+            100
+        )
+      : 0;
 
-  const logicalAcc = categoryStats.logical.attempted > 0
-    ? Math.round((categoryStats.logical.correct / categoryStats.logical.attempted) * 100)
-    : 0;
+  const logicalAcc =
+    categoryStats.logical.attempted > 0
+      ? Math.round(
+          (categoryStats.logical.correct /
+            categoryStats.logical.attempted) *
+            100
+        )
+      : 0;
 
-  const verbalAcc = categoryStats.verbal.attempted > 0
-    ? Math.round((categoryStats.verbal.correct / categoryStats.verbal.attempted) * 100)
-    : 0;
+  const verbalAcc =
+    categoryStats.verbal.attempted > 0
+      ? Math.round(
+          (categoryStats.verbal.correct /
+            categoryStats.verbal.attempted) *
+            100
+        )
+      : 0;
 
   return {
     totalAttempted,

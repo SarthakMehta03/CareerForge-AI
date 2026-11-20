@@ -49,6 +49,27 @@ export const initialResumeState = {
     "languages",
     "interests",
   ],
+  theme: {
+    pageFormat: "A4",
+    pageMargin: "normal",
+    sectionSpacing: 18,
+    entrySpacing: 12,
+    fontSize: 10,
+    fontFamily: "Source Serif Pro",
+    primaryColor: "#000000",
+    colorMode: "full",
+    headingStyle: "line-bottom",
+    capitalization: "uppercase",
+    headingIcons: "none",
+    headerAlign: "center",
+    headerDelimiter: "bullet",
+    linkUnderline: false,
+    linkBlue: false,
+    linkIcon: true,
+    footerPageNumbers: false,
+    footerEmail: false,
+    footerName: false,
+  },
   hiddenSections: [],
   atsScore: 0,
   pageCountLock: null, // null (fluid), 1, or 2
@@ -90,6 +111,10 @@ export function ResumeProvider({ children, initialData = null, resumeId = null }
         personalInfo: {
           ...initialResumeState.personalInfo,
           ...(initialData.personalInfo || {}),
+        },
+        theme: {
+          ...initialResumeState.theme,
+          ...(initialData.theme || {}),
         },
         photoSettings: {
           ...defaultPhotoSettings,

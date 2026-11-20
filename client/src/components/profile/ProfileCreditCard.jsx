@@ -43,23 +43,23 @@ function ProfileCreditCard({ credits }) {
   const recentTransactions = credits.recentTransactions || [];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm space-y-5">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-7 shadow-sm space-y-5 transition-colors">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-black text-white flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-11 h-11 rounded-xl bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 text-white dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
             <Coins size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-gray-900">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">
                 Daily Application Credits
               </h3>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-gray-100 text-gray-700 border border-gray-200">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-gray-100 dark:bg-[#1c2234] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#232a3d]">
                 Daily Allowance
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               Credits allocated to your account every day at 00:00 UTC to practice AI Mock Interviews and generate Aptitude tests.
             </p>
           </div>
@@ -68,14 +68,14 @@ function ProfileCreditCard({ credits }) {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Link
             to="/interviews"
-            className="px-3.5 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+            className="px-3.5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
           >
             <span>Mock Interview</span>
             <ArrowRight size={13} />
           </Link>
           <Link
             to="/aptitude/practice"
-            className="px-3.5 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
           >
             <span>Aptitude</span>
           </Link>
@@ -85,56 +85,56 @@ function ProfileCreditCard({ credits }) {
       {/* Credit Metric Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Available Balance */}
-        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-1.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block">
+        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 space-y-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
             Remaining Credits
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-extrabold text-gray-900">
+            <span className="text-2xl font-extrabold text-gray-900 dark:text-white">
               {balance}
             </span>
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
               / {dailyAllowance}
             </span>
           </div>
           {/* Progress bar */}
-          <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden mt-2">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
-                percentRemaining > 30 ? "bg-black" : "bg-amber-600"
+                percentRemaining > 30 ? "bg-gray-900 dark:bg-blue-500" : "bg-amber-600 dark:bg-amber-400"
               }`}
               style={{ width: `${percentRemaining}%` }}
             />
           </div>
-          <span className="text-[10px] text-gray-500 block pt-0.5">
+          <span className="text-[10px] text-gray-500 dark:text-gray-400 block pt-0.5">
             {percentRemaining}% of daily allowance remaining
           </span>
         </div>
 
         {/* Next Daily Reset (in User's Local Timezone) */}
-        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-            <Clock size={13} className="text-gray-400" />
+        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <Clock size={13} className="text-gray-400 dark:text-gray-500" />
             <span>Next Allowance Reset</span>
           </div>
-          <p className="text-xs font-bold text-gray-900 leading-snug">
+          <p className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
             {nextResetLocal}
           </p>
-          <p className="text-[10px] text-gray-500 leading-tight">
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
             Resets every day at 00:00 UTC (shown in your local timezone).
           </p>
         </div>
 
         {/* Cost & Generation Policy */}
-        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-            <ShieldCheck size={13} className="text-emerald-600" />
+        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <ShieldCheck size={13} className="text-emerald-600 dark:text-emerald-400" />
             <span>Generation Cost</span>
           </div>
-          <p className="text-xs font-bold text-gray-900">
+          <p className="text-xs font-bold text-gray-900 dark:text-white">
             {costPerQuestion} credits per question
           </p>
-          <p className="text-[10px] text-gray-500 leading-tight">
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
             5 questions = 10 credits • 10 questions = 20 credits. Free-tier, zero extra charges.
           </p>
         </div>
@@ -142,16 +142,16 @@ function ProfileCreditCard({ credits }) {
 
       {/* Recent Ledger History Toggle */}
       {recentTransactions.length > 0 && (
-        <div className="pt-2 border-t border-gray-100">
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
-            className="flex items-center justify-between w-full text-xs font-semibold text-gray-600 hover:text-black transition cursor-pointer py-1"
+            className="flex items-center justify-between w-full text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition cursor-pointer py-1"
           >
             <span className="flex items-center gap-1.5">
-              <Calendar size={14} className="text-gray-400" />
+              <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
               <span>Recent Credit Activity Ledger</span>
-              <span className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-full">
                 {recentTransactions.length} entries
               </span>
             </span>
@@ -159,24 +159,24 @@ function ProfileCreditCard({ credits }) {
           </button>
 
           {showHistory && (
-            <div className="mt-3 divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden bg-gray-50/40 text-xs">
+            <div className="mt-3 divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-gray-50/40 dark:bg-gray-900/60 text-xs">
               {recentTransactions.map((tx, idx) => (
                 <div
                   key={idx}
-                  className="p-3 flex items-center justify-between gap-3 bg-white hover:bg-gray-50 transition"
+                  className="p-3 flex items-center justify-between gap-3 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                           tx.type === "DAILY_GRANT" || tx.type === "WEEKLY_GRANT" || tx.type === "REFUND"
-                            ? "bg-green-50 text-green-700 border border-green-200"
-                            : "bg-gray-100 text-gray-800 border border-gray-200"
+                            ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700"
                         }`}
                       >
                         {tx.type}
                       </span>
-                      <span className="text-[11px] text-gray-500">
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
                         {new Date(tx.createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
@@ -185,7 +185,7 @@ function ProfileCreditCard({ credits }) {
                         })}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-800 mt-1 font-medium">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 mt-1 font-medium">
                       {tx.description}
                     </p>
                   </div>
@@ -193,12 +193,12 @@ function ProfileCreditCard({ credits }) {
                   <div className="text-right shrink-0">
                     <span
                       className={`text-xs font-bold ${
-                        tx.amount > 0 ? "text-green-600" : "text-gray-900"
+                        tx.amount > 0 ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-white"
                       }`}
                     >
                       {tx.amount > 0 ? `+${tx.amount}` : tx.amount} credits
                     </span>
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
                       Balance: {tx.balanceAfter}
                     </p>
                   </div>

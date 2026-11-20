@@ -128,17 +128,17 @@ function CertificationsSection({ user, onProfileUpdated }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 gap-4">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-7 shadow-sm transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-gray-800 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black">
             <Award size={19} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Certifications & Credentials
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Add professional certifications from AWS, Google, Coursera, Meta, etc.
             </p>
           </div>
@@ -148,7 +148,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition self-start sm:self-auto active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition self-start sm:self-auto active:scale-95 cursor-pointer"
           >
             <Plus size={14} />
             Add Certification
@@ -158,15 +158,15 @@ function CertificationsSection({ user, onProfileUpdated }) {
 
       {/* Add / Edit Form */}
       {isEditing && (
-        <form onSubmit={handleSave} className="my-6 p-5 bg-gray-50/70 border border-gray-200 rounded-xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+        <form onSubmit={handleSave} className="my-6 p-5 bg-gray-50/70 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-750 rounded-xl space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
               {editingIndex !== null ? "Edit Certification" : "New Certification"}
             </h3>
             <button
               type="button"
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-700 p-1"
+              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -174,7 +174,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Certification Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -184,8 +184,8 @@ function CertificationsSection({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="e.g. AWS Certified Solutions Architect"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.name ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.name ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.name && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.name}</p>
@@ -193,7 +193,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Issuing Organization <span className="text-red-500">*</span>
               </label>
               <input
@@ -203,8 +203,8 @@ function CertificationsSection({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="e.g. Amazon Web Services / Coursera"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.issuer ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.issuer ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.issuer && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.issuer}</p>
@@ -214,7 +214,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Issue Date (optional)
               </label>
               <input
@@ -223,12 +223,12 @@ function CertificationsSection({ user, onProfileUpdated }) {
                 value={form.issueDate}
                 onChange={handleChange}
                 placeholder="e.g. March 2024"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Expiration Date (optional)
               </label>
               <input
@@ -237,14 +237,14 @@ function CertificationsSection({ user, onProfileUpdated }) {
                 value={form.expiryDate}
                 onChange={handleChange}
                 placeholder="e.g. March 2027 or No Expiry"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Credential ID (optional)
               </label>
               <input
@@ -253,12 +253,12 @@ function CertificationsSection({ user, onProfileUpdated }) {
                 value={form.credentialId}
                 onChange={handleChange}
                 placeholder="e.g. ABC-12345-XYZ"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Credential URL (optional)
               </label>
               <input
@@ -268,8 +268,8 @@ function CertificationsSection({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="https://cert.org/verify/123"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.credentialUrl ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.credentialUrl ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.credentialUrl && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.credentialUrl}</p>
@@ -282,14 +282,14 @@ function CertificationsSection({ user, onProfileUpdated }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition"
+              className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               {loading && <Loader2 size={13} className="animate-spin" />}
               {loading ? "Saving..." : "Save Certification"}
@@ -301,10 +301,10 @@ function CertificationsSection({ user, onProfileUpdated }) {
       {/* List */}
       <div className="mt-5 space-y-3">
         {certificationsList.length === 0 ? (
-          <div className="text-center py-10 px-4 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-            <Award size={28} className="mx-auto text-gray-400 mb-2" />
-            <h4 className="text-xs font-semibold text-gray-700">No certifications added yet</h4>
-            <p className="text-[11px] text-gray-500 mt-1 max-w-sm mx-auto">
+          <div className="text-center py-10 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-850/40">
+            <Award size={28} className="mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">No certifications added yet</h4>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
               Add course certificates, cloud certifications, or specialized bootcamps to demonstrate continuous learning.
             </p>
           </div>
@@ -312,20 +312,20 @@ function CertificationsSection({ user, onProfileUpdated }) {
           certificationsList.map((item, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+              className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition bg-white dark:bg-gray-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
             >
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="text-sm font-bold text-gray-900">
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                     {item.name}
                   </h4>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-800 flex items-center gap-1">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex items-center gap-1">
                     <ShieldCheck size={11} />
                     {item.issuer}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 text-[11px] text-gray-500 pt-0.5">
+                <div className="flex flex-wrap items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400 pt-0.5">
                   {item.issueDate && <span>Issued: {item.issueDate}</span>}
                   {item.expiryDate && <span>Expires: {item.expiryDate}</span>}
                   {item.credentialId && <span>ID: {item.credentialId}</span>}
@@ -338,7 +338,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
                     href={item.credentialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 text-gray-600 hover:text-black hover:bg-gray-100 rounded-lg transition flex items-center gap-1 text-[11px]"
+                    className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition flex items-center gap-1 text-[11px]"
                     title="View Credential"
                   >
                     <ExternalLink size={14} />
@@ -350,7 +350,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
                   type="button"
                   onClick={() => handleOpenEdit(idx)}
                   disabled={loading}
-                  className="p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition"
+                  className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
                   title="Edit certification"
                 >
                   <Edit3 size={14} />
@@ -360,7 +360,7 @@ function CertificationsSection({ user, onProfileUpdated }) {
                   type="button"
                   onClick={() => handleDelete(idx)}
                   disabled={loading}
-                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                  className="p-1.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition cursor-pointer"
                   title="Delete certification"
                 >
                   <Trash2 size={14} />

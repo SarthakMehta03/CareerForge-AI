@@ -24,6 +24,14 @@ import PublicResumeView from "./pages/PublicResumeView";
 import LandingPage from "./pages/LandingPage";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminRoute from "./components/auth/AdminRoute";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminContent from "./pages/admin/AdminContent";
+import AdminActivity from "./pages/admin/AdminActivity";
+import AdminMonitoring from "./pages/admin/AdminMonitoring";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 function App() {
   return (
@@ -34,6 +42,7 @@ function App() {
       {/* Public Routes */}
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/view/:id" element={<PublicResumeView />} />
       <Route path="/share/:id" element={<PublicResumeView />} />
@@ -139,6 +148,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       {/* Aptitude Routes */}
       <Route
         path="/aptitude"
@@ -212,6 +222,27 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* Admin Module Protected Routes */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="content" element={<AdminContent />} />
+        <Route path="activity" element={<AdminActivity />} />
+        <Route path="reports" element={<Navigate to="/admin/activity" replace />} />
+        <Route path="monitoring" element={<AdminMonitoring />} />
+        <Route path="audit-logs" element={<Navigate to="/admin/monitoring?tab=audit" replace />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="profile" element={<Navigate to="/admin/settings?tab=profile" replace />} />
+        <Route path="*" element={<Navigate to="/admin" replace />} />
+      </Route>
     </Routes>
   );
 }

@@ -88,8 +88,11 @@ import VersionHistoryModal from "../components/resume/modals/VersionHistoryModal
 import InterviewPrepModal from "../components/resume/modals/InterviewPrepModal";
 import CoverLetterModal from "../components/resume/modals/CoverLetterModal";
 import PhotoDisplay from "../components/resume/PhotoDisplay";
+import ErrorBoundary from "../components/common/ErrorBoundary";
+import ThemeToggle from "../components/common/ThemeToggle";
 import { exportResumeBackup } from "../utils/resumeParser";
 import { lintResume } from "../utils/resumeLinter";
+import { calculateClientATS } from "../utils/atsCalculator";
 
 const sectionMeta = {
   summary: { label: "Summary", icon: FileText },
@@ -155,8 +158,9 @@ function ResumeBuilderContent({ resumeId }) {
     canRedo,
   } = useResume();
 
-  // Real-time resume linter calculation
+  // Real-time resume linter calculation & ATS calculation
   const lintResults = lintResume(resume);
+  const atsResult = React.useMemo(() => calculateClientATS(resume), [resume]);
 
   // track which specific entry is being edited
   const [editingEntry, setEditingEntry] = useState(null);
@@ -196,6 +200,16 @@ function ResumeBuilderContent({ resumeId }) {
 
   // Mobile active tab ('content', 'preview')
   const [mobileTab, setMobileTab] = useState("content");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Monitor window scroll to show quick 'Back to Top' pill
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      setShowScrollTop(window.scrollY > 350);
+    };
+    window.addEventListener("scroll", handleWindowScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleWindowScroll);
+  }, []);
 
   // Drag and Drop state for section reordering
   const [draggedSectionIndex, setDraggedSectionIndex] = useState(null);
@@ -426,10 +440,23 @@ function ResumeBuilderContent({ resumeId }) {
     if (secKey === "summary") {
       return resume.summary ? [{ id: "summary_0", content: resume.summary }] : [];
     }
+    if (secKey === "interests") {
+      // Normalize interests: could be strings or objects { id, name }
+      return (resume.interests || []).map((item, idx) =>
+        typeof item === "object" && item !== null
+          ? item
+          : { id: `int_${idx}`, name: item }
+      );
+    }
     if (secKey === "declaration") {
       return resume.declaration?.statement || resume.declaration?.place || resume.declaration?.signatureName
         ? [{ id: "declaration_0", ...resume.declaration }]
         : [];
+    }
+    if (secKey === "custom") {
+      return resume.customSections && resume.customSections.length > 0
+        ? resume.customSections
+        : resume.custom || [];
     }
     return resume[secKey] || [];
   };
@@ -456,7 +483,7 @@ function ResumeBuilderContent({ resumeId }) {
     if (secKey === "projects") return entry.title || "New Project";
     if (secKey === "certifications") return entry.name || "New Certification";
     if (secKey === "awards") return entry.title || "New Award";
-    if (secKey === "interests") return entry.name || "New Interest";
+    if (secKey === "interests") return typeof entry === "object" ? (entry.name || "New Interest") : (entry || "New Interest");
     if (secKey === "references") return entry.name ? `${entry.name} (${entry.company || "Reference"})` : "New Reference";
     if (secKey === "publications") return entry.title || "New Publication";
     if (secKey === "organizations") return entry.name ? `${entry.name}, ${entry.role || "Volunteer"}` : "New Organization";
@@ -475,6 +502,20 @@ function ResumeBuilderContent({ resumeId }) {
     }
     if (secKey === "declaration") {
       setEditingEntry({ section: "declaration", entryId: "declaration_0" });
+      return;
+    }
+    if (secKey === "custom") {
+      const timestamp = Date.now();
+      const newSec = {
+        id: `custom_${timestamp}`,
+        title: "Custom Section",
+        items: [],
+      };
+      setResume((prev) => ({
+        ...prev,
+        customSections: [...(prev.customSections || []), newSec],
+      }));
+      setEditingEntry({ section: "custom", entryId: newSec.id });
       return;
     }
     const timestamp = Date.now();
@@ -503,9 +544,22 @@ function ResumeBuilderContent({ resumeId }) {
   };
 
   const handleDeleteEntry = (secKey, entryId) => {
+    if (secKey === "custom") {
+      setResume((prev) => ({
+        ...prev,
+        customSections: (prev.customSections || []).filter((e) => e.id !== entryId),
+        custom: (prev.custom || []).filter((e) => e.id !== entryId),
+      }));
+      if (editingEntry?.entryId === entryId) setEditingEntry(null);
+      return;
+    }
     setResume((prev) => ({
       ...prev,
-      [secKey]: (prev[secKey] || []).filter((e) => e.id !== entryId),
+      [secKey]: (prev[secKey] || []).filter((e) => {
+        // Handle both objects with .id and plain strings (interests)
+        if (typeof e === "object" && e !== null) return e.id !== entryId;
+        return true; // don't filter strings by id — they have synthetic ids
+      }),
     }));
     if (editingEntry?.entryId === entryId) setEditingEntry(null);
   };
@@ -515,13 +569,29 @@ function ResumeBuilderContent({ resumeId }) {
       toggleSectionVisibility("summary");
       return;
     }
+    if (secKey === "custom") {
+      setResume((prev) => {
+        const list = prev.customSections || prev.custom || [];
+        return {
+          ...prev,
+          customSections: list.map((item) =>
+            item.id === entryId ? { ...item, hidden: !item.hidden } : item
+          ),
+        };
+      });
+      return;
+    }
     setResume((prev) => {
       const list = prev[secKey] || [];
       return {
         ...prev,
-        [secKey]: list.map((item) =>
-          item.id === entryId ? { ...item, hidden: !item.hidden } : item
-        ),
+        [secKey]: list.map((item) => {
+          // Handle both objects with .id and plain strings
+          if (typeof item === "object" && item !== null) {
+            return item.id === entryId ? { ...item, hidden: !item.hidden } : item;
+          }
+          return item; // strings don't support visibility toggle
+        }),
       };
     });
   };
@@ -533,6 +603,11 @@ function ResumeBuilderContent({ resumeId }) {
       toast.success("Summary cleared");
       return;
     }
+    if (secKey === "custom") {
+      setResume((prev) => ({ ...prev, customSections: [], custom: [] }));
+      toast.success("Custom sections cleared");
+      return;
+    }
     setResume((prev) => ({ ...prev, [secKey]: [] }));
     toast.success(`${sectionMeta[secKey]?.label || secKey} cleared`);
   };
@@ -542,22 +617,22 @@ function ResumeBuilderContent({ resumeId }) {
   const personalInfo = resume.personalInfo || {};
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col justify-between font-sans">
       {/* ── FlowCV Sleek Workspace Header ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-2.5 sticky top-0 z-30 shadow-xs">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-2.5 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Left Cluster: Back to Resumes + Inline Title + Cloud Save status */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={() => navigate("/resumes")}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition cursor-pointer"
               title="Back to all resumes"
             >
               <ArrowLeft size={16} />
               <span className="hidden sm:inline">Resumes</span>
             </button>
 
-            <div className="h-4 w-px bg-gray-200" />
+            <div className="h-4 w-px bg-gray-200 dark:bg-gray-800" />
 
             <div className="flex items-center gap-2">
               {isTitleEditing ? (
@@ -568,16 +643,16 @@ function ResumeBuilderContent({ resumeId }) {
                   onChange={(e) => setTitle(e.target.value)}
                   onBlur={() => setIsTitleEditing(false)}
                   onKeyDown={(e) => e.key === "Enter" && setIsTitleEditing(false)}
-                  className="text-xs font-bold text-gray-900 bg-gray-50 border border-black rounded-lg px-2.5 py-1 outline-none w-36 sm:w-48"
+                  className="text-xs font-bold text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 border border-black dark:border-white rounded-lg px-2.5 py-1 outline-none w-36 sm:w-48"
                 />
               ) : (
                 <button
                   onClick={() => setIsTitleEditing(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-gray-900 hover:bg-gray-100 px-2 py-1 rounded-lg transition group cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-bold text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded-lg transition group cursor-pointer"
                   title="Click to rename resume"
                 >
                   <span className="truncate max-w-[120px] sm:max-w-[180px]">{resume.title || "Untitled Resume"}</span>
-                  <Pencil size={11} className="text-gray-400 group-hover:text-black shrink-0" />
+                  <Pencil size={11} className="text-gray-400 group-hover:text-black dark:group-hover:text-white shrink-0" />
                 </button>
               )}
 
@@ -588,7 +663,7 @@ function ResumeBuilderContent({ resumeId }) {
                 </span>
               )}
               {saveStatus === "saved" && (
-                <span className="hidden md:flex items-center gap-1 text-[11px] text-emerald-600 font-medium ml-0.5" title="All changes saved to cloud">
+                <span className="hidden md:flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium ml-0.5" title="All changes saved to cloud">
                   <CheckCircle size={12} />
                   <span>Saved</span>
                 </span>
@@ -597,14 +672,14 @@ function ResumeBuilderContent({ resumeId }) {
           </div>
 
           {/* Center Cluster: Segmented Control Pill */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200/80 shrink-0">
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200/80 dark:border-gray-700 shrink-0">
             {/* Content Tab */}
             <button
               onClick={() => setActiveTab("content")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                 activeTab === "content"
-                  ? "bg-white text-black shadow-2xs"
-                  : "text-gray-600 hover:text-black"
+                  ? "bg-white dark:bg-gray-900 text-black dark:text-white shadow-2xs"
+                  : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
               }`}
             >
               <FileText size={14} />
@@ -616,8 +691,8 @@ function ResumeBuilderContent({ resumeId }) {
               onClick={() => setActiveTab("customize")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                 activeTab === "customize"
-                  ? "bg-white text-black shadow-2xs"
-                  : "text-gray-600 hover:text-black"
+                  ? "bg-white dark:bg-gray-900 text-black dark:text-white shadow-2xs"
+                  : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
               }`}
             >
               <Sliders size={14} />
@@ -629,8 +704,8 @@ function ResumeBuilderContent({ resumeId }) {
               onClick={() => setActiveTab("ai")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                 activeTab === "ai"
-                  ? "bg-white text-black shadow-2xs"
-                  : "text-gray-600 hover:text-black"
+                  ? "bg-white dark:bg-gray-900 text-black dark:text-white shadow-2xs"
+                  : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
               }`}
             >
               <Sparkles size={14} className={activeTab === "ai" ? "text-amber-500" : "text-amber-600"} />
@@ -649,12 +724,12 @@ function ResumeBuilderContent({ resumeId }) {
           {/* Right Cluster: History, Score, Share, Export & Overflow */}
           <div className="flex items-center gap-2 shrink-0">
             {/* History Undo / Redo & Snapshots */}
-            <div className="hidden lg:flex items-center gap-0.5 bg-gray-100 rounded-xl p-0.5 border border-gray-200">
+            <div className="hidden lg:flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5 border border-gray-200 dark:border-gray-700">
               <button
                 type="button"
                 onClick={undo}
                 disabled={!canUndo}
-                className="p-1.5 rounded-lg text-gray-700 hover:text-black hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
+                className="p-1.5 rounded-lg text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
                 title="Undo (Ctrl+Z)"
               >
                 <RotateCcw size={13} />
@@ -663,54 +738,56 @@ function ResumeBuilderContent({ resumeId }) {
                 type="button"
                 onClick={redo}
                 disabled={!canRedo}
-                className="p-1.5 rounded-lg text-gray-700 hover:text-black hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
+                className="p-1.5 rounded-lg text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
                 title="Redo (Ctrl+Y)"
               >
                 <RotateCw size={13} />
               </button>
-              <div className="w-[1px] h-3 bg-gray-300 mx-0.5" />
+              <div className="w-[1px] h-3 bg-gray-300 dark:bg-gray-700 mx-0.5" />
               <button
                 type="button"
                 onClick={() => setIsVersionModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-gray-700 hover:text-black hover:bg-white transition cursor-pointer"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-gray-700 transition cursor-pointer"
                 title="Resume Versions & Snapshots"
               >
-                <History size={12} className="text-indigo-600" />
+                <History size={12} className="text-indigo-600 dark:text-indigo-400" />
                 <span className="hidden xl:inline">Versions</span>
                 {resume.versions && resume.versions.length > 0 && (
-                  <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1 rounded-full font-bold">
+                  <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 px-1 rounded-full font-bold">
                     {resume.versions.length}
                   </span>
                 )}
               </button>
             </div>
 
-            {/* Quality Score Pill */}
+            {/* ATS Readiness Score Pill */}
             <button
-              onClick={() => setIsQualityModalOpen(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-2xs transition cursor-pointer"
-              title="Resume Quality & Consistency Linter (Click to audit)"
+              onClick={() => setIsATSModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-750 shadow-2xs transition cursor-pointer"
+              title="ATS Resume Readiness Score (Click to view deep audit)"
             >
-              <ShieldCheck size={14} className={lintResults.allChecksPassed ? "text-green-600" : "text-amber-500"} />
-              <span className="hidden sm:inline">Score</span>
+              <Target size={14} className={atsResult.atsScore >= 75 ? "text-emerald-600 dark:text-emerald-400" : atsResult.atsScore >= 50 ? "text-amber-500" : "text-rose-500"} />
+              <span className="hidden sm:inline">ATS Score</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
-                  lintResults.allChecksPassed
-                    ? "bg-green-100 text-green-900"
-                    : "bg-amber-100 text-amber-900"
+                  atsResult.atsScore >= 75
+                    ? "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300"
+                    : atsResult.atsScore >= 50
+                    ? "bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-300"
+                    : "bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300"
                 }`}
               >
-                {lintResults.qualityScore}%
+                {atsResult.atsScore}%
               </span>
             </button>
 
             {/* Share & Analytics Button */}
             <button
               onClick={() => setIsShareModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs transition cursor-pointer"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-750 shadow-2xs transition cursor-pointer"
               title="Share Link & Recruiter View Analytics"
             >
-              <Share2 size={13} className={resume.isPublic ? "text-emerald-600" : "text-gray-500"} />
+              <Share2 size={13} className={resume.isPublic ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"} />
               <span>Share</span>
               {resume.isPublic && (
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Public Link Active" />
@@ -720,31 +797,34 @@ function ResumeBuilderContent({ resumeId }) {
             {/* Export Primary CTA Button */}
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-1.5 bg-black hover:bg-gray-800 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition cursor-pointer shadow-xs"
               title="Export Resume (PDF, Word .docx, ATS Plain-Text .txt)"
             >
               <Download size={13} />
               <span>Export</span>
             </button>
 
+            {/* Theme Toggle (Dropdown) */}
+            <ThemeToggle variant="dropdown" />
+
             {/* Options Three-Dot Menu */}
             <div className="relative" ref={optionsMenuRef}>
               <button
                 onClick={() => setIsOptionsMenuOpen(!isOptionsMenuOpen)}
-                className="p-1.5 text-gray-600 hover:text-black rounded-xl hover:bg-gray-100 transition cursor-pointer border border-gray-200"
+                className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer border border-gray-200 dark:border-gray-700"
                 title="More Options"
               >
                 <MoreVertical size={16} />
               </button>
 
               {isOptionsMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-200 py-1.5 z-50 animate-in fade-in duration-150">
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 py-1.5 z-50 animate-in fade-in duration-150">
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
                       handleDuplicate();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
                   >
                     <Copy size={14} className="text-gray-500" />
                     <span>Duplicate Resume</span>
@@ -754,7 +834,7 @@ function ResumeBuilderContent({ resumeId }) {
                       setIsOptionsMenuOpen(false);
                       setIsTemplateSelectorOpen(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
                   >
                     <LayoutGrid size={14} className="text-gray-500" />
                     <span>Change Template</span>
@@ -764,7 +844,7 @@ function ResumeBuilderContent({ resumeId }) {
                       setIsOptionsMenuOpen(false);
                       navigate(`/resume/${resumeId}/preview`);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
                   >
                     <Eye size={14} className="text-gray-500" />
                     <span>Full Page Preview</span>
@@ -774,7 +854,7 @@ function ResumeBuilderContent({ resumeId }) {
                       setIsOptionsMenuOpen(false);
                       setIsImportModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
                   >
                     <Upload size={14} className="text-gray-500" />
                     <span>Import (PDF / JSON)</span>
@@ -785,18 +865,18 @@ function ResumeBuilderContent({ resumeId }) {
                       exportResumeBackup(resume);
                       toast.success("Resume JSON backup exported!");
                     }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
                   >
                     <FileCode size={14} className="text-gray-500" />
                     <span>Export JSON Backup</span>
                   </button>
-                  <div className="my-1 border-t border-gray-100 mx-2" />
+                  <div className="my-1 border-t border-gray-100 dark:border-gray-800 mx-2" />
                   <button
                     onClick={() => {
                       setIsOptionsMenuOpen(false);
                       handleDelete();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
                   >
                     <Trash2 size={14} />
                     <span>Delete Resume</span>
@@ -809,19 +889,25 @@ function ResumeBuilderContent({ resumeId }) {
       </div>
 
       {/* Mobile Tab Toggle Bar */}
-      <div className="md:hidden flex border-b border-gray-200 bg-white">
+      <div className="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-[53px] z-20">
         <button
-          onClick={() => setMobileTab("content")}
-          className={`flex-1 py-3 text-xs font-bold ${
-            mobileTab === "content" ? "border-b-2 border-black text-black" : "text-gray-500"
+          onClick={() => {
+            setMobileTab("content");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`flex-1 py-3 text-xs font-bold transition ${
+            mobileTab === "content" ? "border-b-2 border-black dark:border-blue-500 text-black dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
           }`}
         >
           Editor View
         </button>
         <button
-          onClick={() => setMobileTab("preview")}
-          className={`flex-1 py-3 text-xs font-bold ${
-            mobileTab === "preview" ? "border-b-2 border-black text-black" : "text-gray-500"
+          onClick={() => {
+            setMobileTab("preview");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`flex-1 py-3 text-xs font-bold transition ${
+            mobileTab === "preview" ? "border-b-2 border-black dark:border-blue-500 text-black dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
           }`}
         >
           Live Preview
@@ -837,7 +923,7 @@ function ResumeBuilderContent({ resumeId }) {
             {activeTab === "content" && (
               <div className="space-y-4 animate-in fade-in duration-200">
                 {/* 1. Sleek Personal Information Header Card */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden transition-all">
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-2xs overflow-hidden transition-all">
                   <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
                       {/* Compact Profile Avatar / Photo */}
@@ -855,13 +941,13 @@ function ResumeBuilderContent({ resumeId }) {
                             photoSettings={resume.photoSettings}
                             primaryColor={resume.theme?.primaryColor}
                             sizeOverride={52}
-                            className="rounded-full shadow-2xs ring-2 ring-gray-100 group-hover:scale-105 transition-transform"
+                            className="rounded-full shadow-2xs ring-2 ring-gray-100 dark:ring-gray-800 group-hover:scale-105 transition-transform"
                           />
                         </div>
                       ) : (
                         <div
                           onClick={() => toggleSectionExpand("personalInfo")}
-                          className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 shrink-0 cursor-pointer hover:bg-gray-200 hover:text-gray-600 transition"
+                          className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 shrink-0 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-200 transition"
                           title="Click to add photo & details"
                         >
                           <User size={22} />
@@ -871,7 +957,7 @@ function ResumeBuilderContent({ resumeId }) {
                       {/* Name & Contact Info Chips */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight truncate">
+                          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 tracking-tight truncate">
                             {personalInfo.fullName || "Your Full Name"}
                           </h2>
                         </div>
@@ -879,19 +965,19 @@ function ResumeBuilderContent({ resumeId }) {
                         {/* Contact Chips */}
                         <div className="flex flex-wrap items-center gap-1.5 pt-1.5 text-xs">
                           {personalInfo.email && (
-                            <span className="inline-flex items-center gap-1 text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-medium">
+                            <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 px-2 py-0.5 rounded-md font-medium">
                               <Mail size={11} className="text-gray-400" />
                               <span className="truncate max-w-[150px] sm:max-w-[200px]">{personalInfo.email}</span>
                             </span>
                           )}
                           {personalInfo.phone && (
-                            <span className="inline-flex items-center gap-1 text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-medium">
+                            <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 px-2 py-0.5 rounded-md font-medium">
                               <Phone size={11} className="text-gray-400" />
                               <span>{personalInfo.phone}</span>
                             </span>
                           )}
                           {personalInfo.location && (
-                            <span className="inline-flex items-center gap-1 text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-medium">
+                            <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 px-2 py-0.5 rounded-md font-medium">
                               <MapPin size={11} className="text-gray-400" />
                               <span className="truncate max-w-[130px]">{personalInfo.location}</span>
                             </span>
@@ -909,8 +995,8 @@ function ResumeBuilderContent({ resumeId }) {
                       onClick={() => toggleSectionExpand("personalInfo")}
                       className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
                         expandedSections.personalInfo
-                          ? "bg-black text-white border-black"
-                          : "bg-white text-gray-700 hover:text-black hover:bg-gray-100 border-gray-200"
+                          ? "bg-gray-900 text-white dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30 border-black"
+                          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
                       }`}
                       title="Edit Personal Information"
                     >
@@ -920,7 +1006,7 @@ function ResumeBuilderContent({ resumeId }) {
                   </div>
 
                   {expandedSections.personalInfo && (
-                    <div className="border-t border-gray-100 p-5 bg-gray-50/50">
+                    <div className="border-t border-gray-100 dark:border-gray-800 p-5 bg-gray-50/50 dark:bg-gray-850/50">
                       <PersonalInfoEditor onDone={() => setExpandedSections(prev => ({ ...prev, personalInfo: false }))} />
                     </div>
                   )}
@@ -942,12 +1028,12 @@ function ResumeBuilderContent({ resumeId }) {
                         key={secKey}
                         onDragOver={(e) => handleSectionDragOver(e, secIdx)}
                         onDrop={(e) => handleSectionDrop(e, secIdx)}
-                        className={`bg-white rounded-xl border transition-all shadow-2xs overflow-hidden ${
+                        className={`bg-white dark:bg-gray-900 rounded-xl border transition-all shadow-2xs overflow-hidden ${
                           isSectionDragOver
-                            ? "border-t-4 border-t-black ring-2 ring-black/10 scale-[1.01]"
+                            ? "border-t-4 border-t-black dark:border-t-white ring-2 ring-black/10 dark:ring-white/10 scale-[1.01]"
                             : isExpanded
-                            ? "border-gray-800 border-l-4"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-gray-800 dark:border-gray-600 border-l-4"
+                            : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
                         } ${isDraggedSection ? "opacity-35 scale-[0.99] border-dashed border-gray-400" : ""}`}
                       >
                         <div
@@ -964,13 +1050,13 @@ function ResumeBuilderContent({ resumeId }) {
                               onDragStart={(e) => handleSectionDragStart(e, secIdx)}
                               onDragEnd={handleSectionDragEnd}
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1 text-gray-300 hover:text-black hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing transition-colors shrink-0"
+                              className="p-1 text-gray-300 dark:text-gray-600 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-grab active:cursor-grabbing transition-colors shrink-0"
                               title="Drag handle to reorder section"
                             >
                               <GripVertical size={16} />
                             </div>
 
-                            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 flex items-center justify-center shrink-0">
                               <Icon size={16} />
                             </div>
 
@@ -983,12 +1069,12 @@ function ResumeBuilderContent({ resumeId }) {
                                     value={sectionHeadings[secKey] ?? meta.label}
                                     onChange={(e) => setSectionHeadings({ ...sectionHeadings, [secKey]: e.target.value })}
                                     onKeyDown={(e) => e.key === "Enter" && setEditingHeading(null)}
-                                    className="text-xs font-bold text-gray-900 bg-gray-100 border border-black rounded-lg px-2 py-0.5 outline-none"
+                                    className="text-xs font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 border border-black dark:border-blue-500 rounded-lg px-2 py-0.5 outline-none"
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setEditingHeading(null)}
-                                    className="p-1 text-white bg-black hover:bg-gray-800 rounded-md transition cursor-pointer"
+                                    className="p-1 text-white dark:text-white bg-gray-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-500 rounded-md transition cursor-pointer font-bold"
                                     title="Save heading"
                                   >
                                     <Check size={12} />
@@ -996,10 +1082,10 @@ function ResumeBuilderContent({ resumeId }) {
                                 </div>
                               ) : (
                                 <>
-                                  <h3 className="text-sm font-bold truncate text-gray-900">
+                                  <h3 className="text-sm font-bold truncate text-gray-900 dark:text-gray-100">
                                     {sectionHeadings[secKey] || meta.label}
                                   </h3>
-                                  <span className="text-[10px] font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
+                                  <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full shrink-0">
                                     {entries.length === 0
                                       ? "Empty"
                                       : secKey === "skills"
@@ -1013,7 +1099,7 @@ function ResumeBuilderContent({ resumeId }) {
                                         e.stopPropagation();
                                         setEditingHeading(secKey);
                                       }}
-                                      className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-black bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-md transition cursor-pointer ml-auto sm:ml-0"
+                                      className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-2 py-0.5 rounded-md transition cursor-pointer ml-auto sm:ml-0"
                                     >
                                       <Pencil size={10} />
                                       <span className="hidden sm:inline">Rename</span>
@@ -1025,15 +1111,15 @@ function ResumeBuilderContent({ resumeId }) {
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0 ml-2">
-                            <div className="p-1 text-gray-400 hover:text-black">
+                            <div className="p-1 text-gray-400 hover:text-black dark:hover:text-white">
                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </div>
                           </div>
                         </div>
 
                         {isExpanded && (
-                          <div className="border-t border-gray-100">
-                            <div className="divide-y divide-gray-100">
+                          <div className="border-t border-gray-100 dark:border-gray-800">
+                            <div className="divide-y divide-gray-100 dark:divide-gray-800">
                               {entries.map((entry, idx) => {
                                 const isEntryHidden = Boolean(entry.hidden) || (secKey === "summary" && hidden.includes("summary"));
                                 const isDraggedEntry = draggedEntry?.secKey === secKey && draggedEntry?.index === idx;
@@ -1049,13 +1135,13 @@ function ResumeBuilderContent({ resumeId }) {
                                       if (dragIsActiveRef.current) return;
                                       setEditingEntry({ section: secKey, entryId: entry.id || "summary_0", index: idx });
                                     }}
-                                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 cursor-pointer group transition-all ${
+                                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer group transition-all ${
                                       isEntryDragOver
-                                        ? "border-t-2 border-black bg-gray-100/80"
+                                        ? "border-t-2 border-black dark:border-blue-500 bg-gray-100/80 dark:bg-[#1c2234]/80"
                                         : isDraggedEntry
-                                        ? "opacity-35 bg-gray-100 border-dashed border-gray-300"
+                                        ? "opacity-35 bg-gray-100 dark:bg-gray-800 border-dashed border-gray-300 dark:border-gray-700"
                                         : ""
-                                    } ${isEntryHidden ? "opacity-50 bg-gray-50/50" : ""}`}
+                                    } ${isEntryHidden ? "opacity-50 bg-gray-50/50 dark:bg-gray-850/50" : ""}`}
                                   >
                                     {canDragEntry ? (
                                       <div
@@ -1063,17 +1149,17 @@ function ResumeBuilderContent({ resumeId }) {
                                         onDragStart={(e) => handleEntryDragStart(e, secKey, idx)}
                                         onDragEnd={handleEntryDragEnd}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="p-1 text-gray-300 hover:text-black hover:bg-gray-200 rounded cursor-grab active:cursor-grabbing transition shrink-0"
+                                        className="p-1 text-gray-300 dark:text-gray-600 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded cursor-grab active:cursor-grabbing transition shrink-0"
                                         title="Drag handle to reorder entry"
                                       >
                                         <GripVertical size={16} />
                                       </div>
                                     ) : (
-                                      <div className="p-1 text-gray-200 shrink-0">
+                                      <div className="p-1 text-gray-200 dark:text-gray-700 shrink-0">
                                         <GripVertical size={16} />
                                       </div>
                                     )}
-                                    <span className={`flex-1 text-sm ${isEntryHidden ? "text-gray-400" : "text-gray-700"} truncate`}>
+                                    <span className={`flex-1 text-sm ${isEntryHidden ? "text-gray-400 dark:text-gray-500" : "text-gray-700 dark:text-gray-200"} truncate`}>
                                       {getEntryLabel(secKey, entry, idx)}
                                     </span>
                                     <button
@@ -1082,7 +1168,7 @@ function ResumeBuilderContent({ resumeId }) {
                                         e.stopPropagation();
                                         toggleEntryVisibility(secKey, entry.id || "summary_0");
                                       }}
-                                      className="p-1 text-gray-400 hover:text-black rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                                      className="p-1 text-gray-400 hover:text-black dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                                       title={isEntryHidden ? "Show entry" : "Hide entry"}
                                     >
                                       {isEntryHidden ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -1094,23 +1180,23 @@ function ResumeBuilderContent({ resumeId }) {
                               {/* New Entry row for all sections (matching FlowCV) */}
                               <div
                                 onClick={() => handleAddEntry(secKey)}
-                                className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 cursor-pointer group"
+                                className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer group"
                               >
-                                <GripVertical size={16} className="text-gray-300 shrink-0" />
-                                <span className="flex-1 text-sm text-gray-400 italic">New Entry</span>
-                                <div className="p-1 text-gray-300">
+                                <GripVertical size={16} className="text-gray-300 dark:text-gray-600 shrink-0" />
+                                <span className="flex-1 text-sm text-gray-400 dark:text-gray-500 italic">New Entry</span>
+                                <div className="p-1 text-gray-300 dark:text-gray-600">
                                   <Eye size={16} />
                                 </div>
                               </div>
                             </div>
 
                             {/* Bottom action bar for all sections (matching FlowCV) */}
-                            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-gray-800">
                               <div className="flex-1 flex justify-center">
                                 <button
                                   type="button"
                                   onClick={() => handleAddEntry(secKey)}
-                                  className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-black border border-gray-200 hover:border-gray-400 px-4 py-2 rounded-xl transition cursor-pointer"
+                                  className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white border border-gray-200 dark:border-gray-750 hover:border-gray-400 dark:hover:border-gray-600 px-4 py-2 rounded-xl transition cursor-pointer"
                                 >
                                   <Plus size={14} />
                                   <span>Add Entry</span>
@@ -1119,7 +1205,7 @@ function ResumeBuilderContent({ resumeId }) {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteSection(secKey)}
-                                className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                                 title="Delete section content"
                               >
                                 <Trash2 size={16} />
@@ -1137,7 +1223,7 @@ function ResumeBuilderContent({ resumeId }) {
                   <button
                     type="button"
                     onClick={() => setIsAddContentOpen(true)}
-                    className="flex-1 py-3.5 px-4 rounded-2xl border-2 border-dashed border-gray-300 hover:border-black bg-white hover:bg-gray-50 text-gray-700 hover:text-black font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                    className="flex-1 py-3.5 px-4 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-blue-500 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-[#1c2234] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-blue-400 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
                   >
                     <Plus size={16} />
                     <span>Add Section</span>
@@ -1146,7 +1232,7 @@ function ResumeBuilderContent({ resumeId }) {
                   <button
                     type="button"
                     onClick={() => setIsImportModalOpen(true)}
-                    className="flex-1 py-3.5 px-4 rounded-2xl border border-gray-200 hover:border-black bg-white hover:bg-gray-50 text-gray-700 hover:text-black font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                    className="flex-1 py-3.5 px-4 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-black dark:hover:border-blue-500 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-[#1c2234] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-blue-400 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
                   >
                     <Upload size={16} />
                     <span>Import Resume (PDF / JSON)</span>
@@ -1164,6 +1250,7 @@ function ResumeBuilderContent({ resumeId }) {
                 onOpenQualityModal={() => setIsQualityModalOpen(true)}
                 onOpenJobMatch={() => setIsJobMatchModalOpen(true)}
                 onOpenInterviewPrep={() => setIsInterviewPrepOpen(true)}
+                onOpenATSModal={() => setIsATSModalOpen(true)}
                 onOpenCoverLetter={() => {
                   setCoverLetterPrefill({ companyName: "", jobDescription: "" });
                   setIsCoverLetterOpen(true);
@@ -1173,8 +1260,14 @@ function ResumeBuilderContent({ resumeId }) {
           </div>
 
           {/* ── Right Column: Live Resume Preview (6 Cols Desktop) ── */}
-          <div className={`md:col-span-6 ${mobileTab === "content" ? "hidden md:block" : "block"}`}>
-            <ResumePreview resume={resume} />
+          <div
+            className={`md:col-span-6 ${
+              mobileTab === "content" ? "hidden md:block" : "block"
+            } md:sticky md:top-20 md:max-h-[calc(100vh-5.5rem)] md:overflow-y-auto pr-0.5`}
+          >
+            <ErrorBoundary title="Resume Preview Encountered an Issue">
+              <ResumePreview resume={resume} />
+            </ErrorBoundary>
           </div>
         </div>
       </main>
@@ -1182,18 +1275,18 @@ function ResumeBuilderContent({ resumeId }) {
       {/* ── Centered Edit Entry Modal Window (FlowCV Style) ── */}
       {editingEntry && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">Edit Entry</h3>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Edit Entry</h3>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowModalTips((prev) => !prev)}
                   className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
                     showModalTips
-                      ? "text-amber-700 bg-amber-50 border-amber-200"
-                      : "text-gray-600 hover:text-black bg-gray-50 hover:bg-gray-100 border-gray-200"
+                      ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800"
+                      : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
                   }`}
                 >
                   <Sparkles size={13} className="text-amber-500" />
@@ -1202,7 +1295,7 @@ function ResumeBuilderContent({ resumeId }) {
                 <button
                   type="button"
                   onClick={() => setEditingEntry(null)}
-                  className="p-2 text-gray-400 hover:text-black rounded-xl hover:bg-gray-100 transition cursor-pointer"
+                  className="p-2 text-gray-400 hover:text-black dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                   title="Close window"
                 >
                   <X size={18} />
@@ -1213,12 +1306,12 @@ function ResumeBuilderContent({ resumeId }) {
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
               {showModalTips && (
-                <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 mb-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-850 rounded-2xl p-4 mb-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-200">
                     <Lightbulb size={16} className="text-amber-600" />
                     <span>Tips for {sectionMeta[editingEntry.section]?.label || "this section"}</span>
                   </div>
-                  <ul className="list-disc list-inside text-xs text-amber-800 space-y-1.5 leading-relaxed pl-1">
+                  <ul className="list-disc list-inside text-xs text-amber-800 dark:text-amber-300 space-y-1.5 leading-relaxed pl-1">
                     {(SECTION_TIPS[editingEntry.section] || [
                       "Keep description clear and relevant to target positions.",
                     ]).map((tip, idx) => (
@@ -1228,15 +1321,17 @@ function ResumeBuilderContent({ resumeId }) {
                 </div>
               )}
 
-              {renderSectionEditor(editingEntry.section)}
+              <ErrorBoundary title={`Unable to load editor for ${sectionMeta[editingEntry.section]?.label || editingEntry.section}`}>
+                {renderSectionEditor(editingEntry.section)}
+              </ErrorBoundary>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 pt-3 border-t border-gray-100 bg-white shrink-0 space-y-3">
+            <div className="p-6 pt-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0 space-y-3">
               <button
                 type="button"
                 onClick={() => setEditingEntry(null)}
-                className="w-full py-3.5 bg-black hover:bg-gray-800 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
+                className="w-full py-3.5 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
               >
                 <Check size={16} />
                 <span>Done</span>
@@ -1244,7 +1339,7 @@ function ResumeBuilderContent({ resumeId }) {
               <div className="flex justify-center">
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition cursor-pointer"
                 >
                   <Settings size={13} />
                   <span>Show customizations for this section</span>
@@ -1330,6 +1425,19 @@ function ResumeBuilderContent({ resumeId }) {
         initialCompany={coverLetterPrefill.companyName}
         initialJobDesc={coverLetterPrefill.jobDescription}
       />
+
+      {/* Floating Scroll to Top Pill (User-Friendly helper when scrolled deep into sections) */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 left-6 z-40 bg-white/95 hover:bg-black hover:text-white text-gray-700 border border-gray-200/90 shadow-xl px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-150"
+          title="Scroll back to top"
+        >
+          <ChevronUp size={14} />
+          <span>Top</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -1383,10 +1491,10 @@ export function ResumeBuilder() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0c0e14]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw size={32} className="animate-spin text-black" />
-          <p className="text-sm font-medium text-gray-600">Loading Resume Builder Workspace...</p>
+          <RefreshCw size={32} className="animate-spin text-black dark:text-blue-500" />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Loading Resume Builder Workspace...</p>
         </div>
       </div>
     );
@@ -1394,7 +1502,9 @@ export function ResumeBuilder() {
 
   return (
     <ResumeProvider initialData={initialData} resumeId={resumeId}>
-      <ResumeBuilderContent resumeId={resumeId} />
+      <ErrorBoundary title="Resume Builder Encountered an Issue">
+        <ResumeBuilderContent resumeId={resumeId} />
+      </ErrorBoundary>
     </ResumeProvider>
   );
 }

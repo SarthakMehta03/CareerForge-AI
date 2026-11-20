@@ -66,7 +66,7 @@ function AptitudeRecommendations({ recommendations = [] }) {
               </Link>
               <Link
                 to={`/aptitude/practice/${rec.topicId}`}
-                className="flex-1 py-1.5 px-2 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center justify-center gap-1 transition"
+                className="flex-1 py-1.5 px-2 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center justify-center gap-1 transition cursor-pointer shadow-xs"
               >
                 <Play size={12} />
                 Practice

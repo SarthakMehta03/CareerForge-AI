@@ -364,31 +364,55 @@ export function parseResumeText(rawText) {
 
   // Process Skills
   if (sectionContent.skills.length > 0) {
-    const text = sectionContent.skills.join(" ");
     const levels = ["Beginner", "Intermediate", "Advanced", "Expert", "Master"];
     const foundSkills = [];
+    let currentCategory = "Technical";
+    let hasCategorized = false;
 
-    const parts = text.split(/[•,|·]/).map((s) => s.trim()).filter(Boolean);
-    for (let p of parts) {
-      let lvl = "Intermediate";
-      for (const l of levels) {
-        const regex = new RegExp(`\\b${l}\\b`, "i");
-        if (regex.test(p)) {
-          lvl = l;
-          p = p.replace(regex, "").trim();
-          break;
-        }
+    for (const rawLine of sectionContent.skills) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      const colonMatch = line.match(/^([^:]{2,35}):\s*(.+)$/);
+      let cat = currentCategory;
+      let skillsText = line;
+
+      if (colonMatch) {
+        cat = colonMatch[1].trim();
+        currentCategory = cat;
+        skillsText = colonMatch[2].trim();
+        hasCategorized = true;
       }
-      if (p.length > 1 && p.length < 35) {
-        foundSkills.push({
-          id: `skill_${Date.now()}_${foundSkills.length}`,
-          name: p,
-          category: "Technical",
-          level: lvl,
-        });
+
+      const parts = skillsText.split(/[•,|·\t]/).map((s) => s.trim()).filter(Boolean);
+      for (let p of parts) {
+        let lvl = "Intermediate";
+        for (const l of levels) {
+          const regex = new RegExp(`\\b${l}\\b`, "i");
+          if (regex.test(p)) {
+            lvl = l;
+            p = p.replace(regex, "").trim();
+            break;
+          }
+        }
+        if (p.length > 1 && p.length < 50) {
+          foundSkills.push({
+            id: `skill_${Date.now()}_${foundSkills.length}`,
+            name: p,
+            category: cat,
+            level: lvl,
+          });
+        }
       }
     }
     result.skills = foundSkills;
+    if (hasCategorized) {
+      result.theme = {
+        ...(result.theme || {}),
+        skillGrouping: "categorized",
+        groupSkillsByCategory: true,
+      };
+    }
   }
 
   // Process Projects

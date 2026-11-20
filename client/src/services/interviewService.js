@@ -6,8 +6,19 @@ import {
   DEFAULT_INTERVIEW_ROLE,
 } from "../constants/interviewConstants";
 import { SAMPLE_QUESTIONS } from "../data/interviewQuestions";
+import {
+  getActiveUserScope,
+  getScopedKey,
+  safeGet,
+  safeSet,
+  safeRemove,
+  migrateLegacyAssessments,
+} from "../utils/userStorageScope";
 
 export const API_BASE_URL = "http://localhost:5000";
+
+// Run safe legacy migration on load
+migrateLegacyAssessments();
 
 const interviewApi = axios.create({
   baseURL: `${API_BASE_URL}/api/interview`,
@@ -24,32 +35,21 @@ interviewApi.interceptors.request.use((config) => {
 });
 
 /**
- * LocalStorage Helpers
+ * User-Scoped LocalStorage Helpers
  */
-const safeGetItem = (key) => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch (error) {
-    console.warn(`[InterviewService] Error reading from localStorage (${key}):`, error);
-    return null;
-  }
+const safeGetItem = (baseKey) => {
+  const scopedKey = getScopedKey(baseKey);
+  return safeGet(scopedKey, null);
 };
 
-const safeSetItem = (key, value) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.warn(`[InterviewService] Error writing to localStorage (${key}):`, error);
-  }
+const safeSetItem = (baseKey, value) => {
+  const scopedKey = getScopedKey(baseKey);
+  return safeSet(scopedKey, value);
 };
 
-const safeRemoveItem = (key) => {
-  try {
-    localStorage.removeItem(key);
-  } catch (error) {
-    console.warn(`[InterviewService] Error removing from localStorage (${key}):`, error);
-  }
+const safeRemoveItem = (baseKey) => {
+  const scopedKey = getScopedKey(baseKey);
+  return safeRemove(scopedKey);
 };
 
 /**
@@ -335,8 +335,13 @@ export const startInterviewSession = (config = {}, questions = null) => {
     questionDurationSeconds: INTERVIEW_QUESTION_DURATION_SECONDS,
   };
 
+  const { isGuest, userId, accountId, userEmail } = getActiveUserScope();
+
   const newSession = {
     sessionId: `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    userId: isGuest ? null : userId,
+    userAccountId: isGuest ? null : accountId,
+    userEmail: isGuest ? null : userEmail,
     targetRole: role,
     startedAt: new Date().toISOString(),
     config: sessionConfig,
@@ -373,10 +378,19 @@ export const updateQuestionTimer = (questionId, timerData) => {
 };
 
 /**
- * Get active in-progress session
+ * Get active in-progress session (scoped to active user)
  */
 export const getActiveSession = () => {
-  return safeGetItem(STORAGE_KEYS.CURRENT_SESSION);
+  const session = safeGetItem(STORAGE_KEYS.CURRENT_SESSION);
+  if (!session) return null;
+  const { isGuest, userId } = getActiveUserScope();
+  if (!isGuest && session.userId && session.userId !== userId) {
+    return null;
+  }
+  if (isGuest && session.userId) {
+    return null;
+  }
+  return session;
 };
 
 /**
@@ -483,8 +497,13 @@ export const completeInterviewSession = (summaryData, timeSpentSeconds = 0) => {
         roleCompetence: finalOverallScore,
       });
 
+  const { isGuest, userId, accountId, userEmail } = getActiveUserScope();
+
   const finalResult = {
     id: session?.sessionId || `result_${Date.now()}`,
+    userId: isGuest ? null : userId,
+    userAccountId: isGuest ? null : accountId,
+    userEmail: isGuest ? null : userEmail,
     completedAt,
     timeSpentSeconds,
     targetRole: role,
@@ -510,7 +529,7 @@ export const completeInterviewSession = (summaryData, timeSpentSeconds = 0) => {
   safeSetItem(STORAGE_KEYS.LATEST_RESULT, finalResult);
 
   // Add to history
-  const history = safeGetItem(STORAGE_KEYS.HISTORY) || [];
+  const history = getInterviewHistory();
   const updatedHistory = [finalResult, ...history.filter((h) => h.id !== finalResult.id)];
   safeSetItem(STORAGE_KEYS.HISTORY, updatedHistory);
 
@@ -556,33 +575,63 @@ const sanitizeSessionRecord = (item) => {
 };
 
 /**
- * Retrieve latest completed result
+ * Retrieve latest completed result (strictly verifying ownership)
  */
 export const getLatestResult = () => {
   const result = safeGetItem(STORAGE_KEYS.LATEST_RESULT);
-  return sanitizeSessionRecord(result);
+  if (!result) return null;
+  const { isGuest, userId, accountId } = getActiveUserScope();
+  if (isGuest && (!result.userId || result.userId === "guest")) {
+    return sanitizeSessionRecord(result);
+  }
+  if (!isGuest && (result.userId === userId || (accountId && result.userAccountId === accountId))) {
+    return sanitizeSessionRecord(result);
+  }
+  return null;
 };
 
 /**
- * Retrieve specific result by ID
+ * Retrieve specific result by ID (strictly verifying ownership)
  */
 export const getResultById = (id) => {
   if (!id) return null;
-  const latest = getLatestResult();
-  if (latest && latest.id === id) return sanitizeSessionRecord(latest);
+  const { isGuest, userId, accountId } = getActiveUserScope();
 
-  const history = safeGetItem(STORAGE_KEYS.HISTORY) || [];
+  // Check latest result first
+  const latest = getLatestResult();
+  if (latest && latest.id === id) {
+    return sanitizeSessionRecord(latest);
+  }
+
+  // Check user-scoped history
+  const history = getInterviewHistory();
   const found = history.find((item) => item.id === id) || null;
-  return sanitizeSessionRecord(found);
+  if (!found) return null;
+
+  if (isGuest) {
+    return !found.userId || found.userId === "guest" ? sanitizeSessionRecord(found) : null;
+  }
+  const isOwner = found.userId === userId || (accountId && found.userAccountId === accountId);
+  return isOwner ? sanitizeSessionRecord(found) : null;
 };
 
 /**
- * Retrieve history
+ * Retrieve user-scoped history
  */
 export const getInterviewHistory = () => {
-  const history = safeGetItem(STORAGE_KEYS.HISTORY);
-  if (!Array.isArray(history)) return [];
-  return history.map(sanitizeSessionRecord);
+  const rawHistory = safeGetItem(STORAGE_KEYS.HISTORY);
+  if (!Array.isArray(rawHistory)) return [];
+
+  const { isGuest, userId, accountId } = getActiveUserScope();
+  const filtered = rawHistory.filter((item) => {
+    if (!item) return false;
+    if (isGuest) {
+      return !item.userId || item.userId === "guest";
+    }
+    return item.userId === userId || (accountId && item.userAccountId === accountId);
+  });
+
+  return filtered.map(sanitizeSessionRecord);
 };
 
 /**

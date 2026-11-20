@@ -59,7 +59,7 @@ function AptitudeTopics() {
   }, [activeCategory, selectedDifficulty, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -75,7 +75,7 @@ function AptitudeTopics() {
 
           <Link
             to="/aptitude/test"
-            className="px-3.5 py-1.5 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
           >
             <Clock size={13} />
             Take Timed Test
@@ -104,10 +104,10 @@ function AptitudeTopics() {
                 key={tab.id}
                 type="button"
                 onClick={() => handleCategoryChange(tab.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                   activeCategory === tab.id
-                    ? "bg-black text-white shadow-xs"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-gray-900 text-white shadow-xs dark:bg-blue-600 dark:text-white"
+                    : "bg-gray-100 dark:bg-[#1c2234] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#252c40]"
                 }`}
               >
                 {tab.label}

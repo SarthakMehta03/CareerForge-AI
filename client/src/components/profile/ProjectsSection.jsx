@@ -146,17 +146,17 @@ function ProjectsSection({ user, onProfileUpdated }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 gap-4">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-7 shadow-sm transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-gray-800 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 flex items-center justify-center text-white dark:text-blue-400">
             <FolderGit2 size={19} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Projects & Portfolios
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Showcase technical projects, repositories, live URLs, and tools used.
             </p>
           </div>
@@ -166,7 +166,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition self-start sm:self-auto active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition self-start sm:self-auto active:scale-95 cursor-pointer shadow-xs"
           >
             <Plus size={14} />
             Add Project
@@ -176,22 +176,22 @@ function ProjectsSection({ user, onProfileUpdated }) {
 
       {/* Add / Edit Form */}
       {isEditing && (
-        <form onSubmit={handleSave} className="my-6 p-5 bg-gray-50/70 border border-gray-200 rounded-xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+        <form onSubmit={handleSave} className="my-6 p-5 bg-gray-50/70 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-750 rounded-xl space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
               {editingIndex !== null ? "Edit Project" : "New Project"}
             </h3>
             <button
               type="button"
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-700 p-1"
+              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 cursor-pointer"
             >
               <X size={16} />
             </button>
           </div>
 
           <div>
-            <label className="block mb-1 text-xs font-medium text-gray-700">
+            <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
               Project Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -201,8 +201,8 @@ function ProjectsSection({ user, onProfileUpdated }) {
               onChange={handleChange}
               placeholder="e.g. AI-Powered Resume Analyzer"
               className={`w-full h-9 rounded-lg border ${
-                errors.title ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-              } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                errors.title ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
             />
             {errors.title && (
               <p className="mt-1 text-[11px] text-red-500">{errors.title}</p>
@@ -210,7 +210,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
           </div>
 
           <div>
-            <label className="block mb-1 text-xs font-medium text-gray-700">
+            <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
               Description
             </label>
             <textarea
@@ -219,12 +219,12 @@ function ProjectsSection({ user, onProfileUpdated }) {
               value={form.description}
               onChange={handleChange}
               placeholder="What problem does this project solve? What were key accomplishments and architecture?"
-              className="w-full rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400 resize-none"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500 resize-none"
             />
           </div>
 
           <div>
-            <label className="block mb-1 text-xs font-medium text-gray-700">
+            <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
               Technologies Used (Comma-separated)
             </label>
             <input
@@ -233,13 +233,13 @@ function ProjectsSection({ user, onProfileUpdated }) {
               value={form.technologies}
               onChange={handleChange}
               placeholder="e.g. React, Node.js, Express, MongoDB, Tailwind CSS"
-              className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Live Demo URL (optional)
               </label>
               <input
@@ -249,8 +249,8 @@ function ProjectsSection({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="https://myproject.com"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.liveUrl ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.liveUrl ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.liveUrl && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.liveUrl}</p>
@@ -258,7 +258,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 GitHub Repository URL (optional)
               </label>
               <input
@@ -268,8 +268,8 @@ function ProjectsSection({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="https://github.com/username/repo"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.githubUrl ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.githubUrl ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.githubUrl && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.githubUrl}</p>
@@ -279,7 +279,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Start Date (optional)
               </label>
               <input
@@ -288,13 +288,13 @@ function ProjectsSection({ user, onProfileUpdated }) {
                 value={form.startDate}
                 onChange={handleChange}
                 placeholder="e.g. Jan 2024"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
 
             {!form.isCurrent && (
               <div>
-                <label className="block mb-1 text-xs font-medium text-gray-700">
+                <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                   End Date (optional)
                 </label>
                 <input
@@ -303,19 +303,19 @@ function ProjectsSection({ user, onProfileUpdated }) {
                   value={form.endDate}
                   onChange={handleChange}
                   placeholder="e.g. May 2024"
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                  className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
                 />
               </div>
             )}
 
             <div className="flex items-center gap-2 pt-2">
-              <label className="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
                 <input
                   type="checkbox"
                   name="isCurrent"
                   checked={form.isCurrent}
                   onChange={handleChange}
-                  className="rounded border-gray-300 text-black focus:ring-black"
+                  className="rounded border-gray-300 dark:border-gray-600 text-black dark:text-white focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800"
                 />
                 Currently working on this project
               </label>
@@ -327,14 +327,14 @@ function ProjectsSection({ user, onProfileUpdated }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition"
+              className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs"
             >
               {loading && <Loader2 size={13} className="animate-spin" />}
               {loading ? "Saving..." : "Save Project"}
@@ -346,10 +346,10 @@ function ProjectsSection({ user, onProfileUpdated }) {
       {/* Projects List */}
       <div className="mt-5 space-y-3">
         {projectsList.length === 0 ? (
-          <div className="text-center py-10 px-4 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-            <FolderGit2 size={28} className="mx-auto text-gray-400 mb-2" />
-            <h4 className="text-xs font-semibold text-gray-700">No projects added yet</h4>
-            <p className="text-[11px] text-gray-500 mt-1 max-w-sm mx-auto">
+          <div className="text-center py-10 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-850/40">
+            <FolderGit2 size={28} className="mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">No projects added yet</h4>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
               Showcasing practical projects significantly strengthens your profile and gives recruiters real proof of skills.
             </p>
           </div>
@@ -357,23 +357,23 @@ function ProjectsSection({ user, onProfileUpdated }) {
           projectsList.map((item, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition bg-white space-y-2.5 shadow-2xs"
+              className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition bg-white dark:bg-gray-900 space-y-2.5 shadow-2xs"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="text-sm font-bold text-gray-900">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                       {item.title}
                     </h4>
                     {item.isCurrent && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black text-white">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-900 dark:bg-blue-500/15 border border-transparent dark:border-blue-500/30 text-white dark:text-blue-400">
                         In Progress
                       </span>
                     )}
                   </div>
 
                   {(item.startDate || item.endDate) && (
-                    <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
                       <Calendar size={12} />
                       {item.startDate} {item.endDate ? `- ${item.endDate}` : item.isCurrent ? "- Present" : ""}
                     </p>
@@ -386,7 +386,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
                       href={item.liveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 text-gray-600 hover:text-black hover:bg-gray-100 rounded-lg transition flex items-center gap-1 text-[11px]"
+                      className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition flex items-center gap-1 text-[11px]"
                       title="Live Demo"
                     >
                       <ExternalLink size={14} />
@@ -399,7 +399,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
                       href={item.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 text-gray-600 hover:text-black hover:bg-gray-100 rounded-lg transition flex items-center gap-1 text-[11px]"
+                      className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition flex items-center gap-1 text-[11px]"
                       title="GitHub Repository"
                     >
                       <GitBranch size={14} />
@@ -411,7 +411,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
                     type="button"
                     onClick={() => handleOpenEdit(idx)}
                     disabled={loading}
-                    className="p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition"
+                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
                     title="Edit project"
                   >
                     <Edit3 size={14} />
@@ -421,7 +421,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
                     type="button"
                     onClick={() => handleDelete(idx)}
                     disabled={loading}
-                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                    className="p-1.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition cursor-pointer"
                     title="Delete project"
                   >
                     <Trash2 size={14} />
@@ -430,7 +430,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
               </div>
 
               {item.description && (
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
                   {item.description}
                 </p>
               )}
@@ -440,7 +440,7 @@ function ProjectsSection({ user, onProfileUpdated }) {
                   {item.technologies.map((t, tIdx) => (
                     <span
                       key={tIdx}
-                      className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 text-gray-700"
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
                     >
                       {t}
                     </span>

@@ -17,7 +17,7 @@ function HistoryTable({ history = [], isFiltered = false, onClearFilters = null,
                 <button
                   type="button"
                   onClick={onClearFilters}
-                  className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition active:scale-95 cursor-pointer"
+                  className="px-4 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition active:scale-95 cursor-pointer shadow-xs"
                 >
                   Clear Filters
                 </button>
@@ -39,7 +39,7 @@ function HistoryTable({ history = [], isFiltered = false, onClearFilters = null,
               <button
                 type="button"
                 onClick={onStartInterview}
-                className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition active:scale-95 cursor-pointer"
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition active:scale-95 cursor-pointer shadow-xs"
               >
                 Start an Interview
               </button>

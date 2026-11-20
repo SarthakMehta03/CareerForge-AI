@@ -7,6 +7,7 @@ import {
   Briefcase,
   Award,
   Compass,
+  Palette,
   Layers,
   Loader2,
   AlertCircle,
@@ -25,6 +26,7 @@ import ProjectsSection from "../components/profile/ProjectsSection";
 import ExperienceSection from "../components/profile/ExperienceSection";
 import CertificationsSection from "../components/profile/CertificationsSection";
 import CareerPreferences from "../components/profile/CareerPreferences";
+import AppearanceSection from "../components/profile/AppearanceSection";
 
 import { getProfile } from "../services/profileService";
 import { getCurrentUser } from "../services/authService";
@@ -37,6 +39,7 @@ const SECTIONS = [
   { id: "experience", label: "Experience", icon: Briefcase },
   { id: "certifications", label: "Certifications", icon: Award },
   { id: "preferences", label: "Preferences", icon: Compass },
+  { id: "appearance", label: "Appearance", icon: Palette },
   { id: "all", label: "View All", icon: Layers },
 ];
 
@@ -106,34 +109,34 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Loading State */}
         {loading && !user ? (
           <div className="py-24 flex flex-col items-center justify-center gap-3">
-            <div className="w-9 h-9 border-3 border-black border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-semibold text-gray-500">
+            <div className="w-9 h-9 border-3 border-gray-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
               Loading your profile details...
             </p>
           </div>
         ) : error && !user ? (
           /* Error State */
-          <div className="bg-white border border-red-200 rounded-2xl p-8 text-center max-w-md mx-auto space-y-4 shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+          <div className="bg-white dark:bg-[#141824] border border-red-200 dark:border-red-900/40 rounded-2xl p-8 text-center max-w-md mx-auto space-y-4 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
               <AlertCircle size={24} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">
                 Failed to Load Profile
               </h2>
-              <p className="text-xs text-gray-500 mt-1">{error}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{error}</p>
             </div>
             <button
               type="button"
               onClick={loadProfileData}
-              className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-2 mx-auto active:scale-95"
+              className="px-4 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition flex items-center gap-2 mx-auto active:scale-95 cursor-pointer shadow-xs"
             >
               <RefreshCw size={13} />
               Try Again
@@ -160,7 +163,7 @@ function Profile() {
             {credits && <ProfileCreditCard credits={credits} />}
 
             {/* Section Tabs Navigation */}
-            <div className="bg-white border border-gray-200 rounded-xl p-1.5 shadow-2xs overflow-x-auto scrollbar-none">
+            <div className="bg-white dark:bg-[#141824] border border-gray-200 dark:border-[#232a3d] rounded-xl p-1.5 shadow-2xs overflow-x-auto scrollbar-none transition-colors">
               <div className="flex items-center gap-1 min-w-max">
                 {SECTIONS.map((tab) => {
                   const Icon = tab.icon;
@@ -172,8 +175,8 @@ function Profile() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
                         isActive
-                          ? "bg-black text-white shadow-xs"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
+                          ? "bg-gray-900 text-white shadow-xs dark:bg-blue-500/15 dark:text-blue-400 dark:border dark:border-blue-500/30 font-semibold"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/70 dark:hover:bg-[#1c2234]"
                       }`}
                     >
                       <Icon size={14} />
@@ -233,6 +236,10 @@ function Profile() {
                   user={user}
                   onProfileUpdated={handleProfileUpdated}
                 />
+              )}
+
+              {(activeTab === "appearance" || activeTab === "all") && (
+                <AppearanceSection />
               )}
             </div>
           </>

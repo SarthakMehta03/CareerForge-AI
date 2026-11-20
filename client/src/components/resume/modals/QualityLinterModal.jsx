@@ -92,7 +92,7 @@ export function QualityLinterModal({ isOpen, onClose }) {
                 <ShieldCheck size={18} className="text-amber-400" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Resume Quality & Consistency Linter</h3>
+                <h3 className="text-base font-bold text-gray-900">Formatting & Consistency Quality Audit</h3>
                 <p className="text-xs text-gray-500">
                   Real-time audit of punctuation, date styles, overused action verbs, and passive voice
                 </p>

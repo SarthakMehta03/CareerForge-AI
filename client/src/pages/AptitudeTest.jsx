@@ -197,7 +197,7 @@ function AptitudeTest() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -206,7 +206,7 @@ function AptitudeTest() {
           <div className="max-w-2xl mx-auto space-y-6">
             <Link
               to="/aptitude"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black transition"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-blue-400 transition"
             >
               <ChevronLeft size={16} />
               Back to Aptitude Dashboard
@@ -295,7 +295,7 @@ function AptitudeTest() {
                 <button
                   type="button"
                   onClick={handleStartTest}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold transition active:scale-95 shadow-xs"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition active:scale-95 shadow-xs cursor-pointer"
                 >
                   Start Assessment
                 </button>
@@ -333,7 +333,7 @@ function AptitudeTest() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmModal(true)}
-                  className="px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold transition active:scale-95 shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition active:scale-95 shadow-xs cursor-pointer"
                 >
                   Finish Test
                 </button>
@@ -403,7 +403,7 @@ function AptitudeTest() {
                       type="button"
                       onClick={handleNext}
                       disabled={currentIndex === session.questions.length - 1}
-                      className="px-3.5 py-1.5 rounded-lg bg-black text-white hover:bg-gray-900 disabled:opacity-40 text-xs font-semibold flex items-center gap-1 transition shadow-xs"
+                      className="px-3.5 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white disabled:opacity-40 text-xs font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer"
                     >
                       Next
                       <ChevronRight size={14} />
@@ -483,7 +483,7 @@ function AptitudeTest() {
                   type="button"
                   onClick={handleCompleteSubmission}
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold transition active:scale-95 shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition active:scale-95 shadow-xs cursor-pointer"
                 >
                   {isSubmitting ? "Grading..." : "Submit Test"}
                 </button>

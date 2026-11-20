@@ -69,7 +69,7 @@ function AptitudeTopicCard({ topic, questionCount = 0, progress = null, delay = 
 
         <Link
           to={`/aptitude/practice/${id}`}
-          className="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs"
+          className="px-3 py-2 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
         >
           <Play size={13} />
           Practice

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoClose } from "react-icons/io5";
 import { HiOutlineMail } from "react-icons/hi";
 import toast from "react-hot-toast";
+
 import InputField from "./InputField";
 import Button from "./Button";
 import { requestForgotPassword } from "../../services/authService";
@@ -10,30 +11,60 @@ import { requestForgotPassword } from "../../services/authService";
 function ForgotPasswordModal({ isOpen, onClose }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [devHint, setDevHint] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!email) {
-      toast.error("Please enter your email address.");
+    if (e) e.preventDefault();
+    if (loading || cooldown > 0) return;
+
+    setError("");
+    setDevHint("");
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setError("Please enter your registered email address.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
     try {
       setLoading(true);
-      const res = await requestForgotPassword(email);
-      setResetSuccess(res.data);
-      if (res.data.emailSent) {
-        toast.success("Email sent to your inbox!");
-      } else {
-        toast.success("Password reset link generated!");
-      }
+      const res = await requestForgotPassword(cleanEmail);
+      toast.success(res.data?.message || "Reset link sent if account exists.");
+      setSubmitted(true);
+      setCooldown(60); // 60s cooldown between requests
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to send reset link."
-      );
+      const serverMessage =
+        err.response?.data?.message || "Failed to request password reset link.";
+      setError(serverMessage);
+
+      // Helpful developer setup instructions returned by server in non-production
+      if (err.response?.data?.devHint) {
+        setDevHint(err.response.data.devHint);
+      }
+
+      // If server returned a rate limit or cooldown retry interval
+      if (err.response?.data?.retryAfter) {
+        setCooldown(err.response.data.retryAfter);
+      }
     } finally {
       setLoading(false);
     }
@@ -41,92 +72,130 @@ function ForgotPasswordModal({ isOpen, onClose }) {
 
   const handleModalClose = () => {
     setEmail("");
-    setResetSuccess(null);
+    setSubmitted(false);
+    setError("");
+    setDevHint("");
+    setCooldown(0);
     onClose();
+  };
+
+  const handleDifferentEmail = () => {
+    setSubmitted(false);
+    setError("");
+    setDevHint("");
   };
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8"
+          className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-colors duration-150"
         >
           <button
             onClick={handleModalClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <IoClose size={22} />
           </button>
 
-          <h3 className="text-2xl font-bold text-gray-900 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-900/60">
+              <HiOutlineMail size={26} />
+            </div>
+          </div>
+
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center tracking-tight">
             Reset Password
           </h3>
-          <p className="mt-2 text-sm text-gray-500 text-center">
-            Enter your email address to receive a password reset link.
+          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 text-center">
+            {submitted
+              ? "Check your inbox for the password reset link."
+              : "Enter your registered email to receive a password reset link."}
           </p>
 
-          {resetSuccess ? (
-            <div className="mt-6 space-y-4 text-center">
-              {resetSuccess.emailSent ? (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm">
-                  <div className="flex items-center justify-center gap-2 font-semibold mb-1 text-green-900">
-                    <HiOutlineMail size={22} />
-                    <span>Email Sent Successfully!</span>
-                  </div>
-                  <p className="text-xs text-green-700 mt-1">
-                    We've sent a password reset email to <strong>{email}</strong>. Please check your inbox and click the link inside.
-                  </p>
-                </div>
-              ) : (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-sm text-left">
-                  <p className="font-semibold mb-1 text-amber-950">Link Generated (Development Mode):</p>
-                  <p className="text-xs text-amber-800 mb-2">
-                    Add SMTP details to <code className="bg-amber-100 px-1 py-0.5 rounded">server/.env</code> to send real emails to your inbox. You can test directly using the link below:
-                  </p>
-                  <p className="text-xs break-all bg-white p-2.5 rounded border border-amber-300 font-mono select-all">
-                    {resetSuccess.resetUrl}
-                  </p>
-                </div>
-              )}
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-900/60 p-3 text-red-700 dark:text-red-400 text-xs">
+              {error}
+            </div>
+          )}
 
-              <div className="flex gap-2 pt-2">
+          {devHint && (
+            <div className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 p-3 text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
+              <strong className="block font-semibold mb-1">Configuration Required:</strong>
+              {devHint}
+            </div>
+          )}
+
+          {submitted ? (
+            <div className="mt-6 space-y-4 text-center">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl text-emerald-800 dark:text-emerald-300 text-sm">
+                <p className="font-semibold text-emerald-950 dark:text-emerald-200 mb-1">
+                  Email Dispatched
+                </p>
+                <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                  If an account is associated with <strong>{email}</strong>, a secure password reset link has been sent. The link expires in 15 minutes.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Button
+                  text={
+                    cooldown > 0
+                      ? `Resend Link in ${cooldown}s`
+                      : "Resend Reset Link"
+                  }
+                  type="button"
+                  loading={loading}
+                  disabled={loading || cooldown > 0}
+                  onClick={handleSubmit}
+                />
+
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetSuccess.resetUrl);
-                    toast.success("Copied link to clipboard!");
-                  }}
-                  className="flex-1 py-2.5 px-4 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors cursor-pointer"
+                  onClick={handleDifferentEmail}
+                  className="w-full py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  Copy Reset Link
+                  Use a different email address
                 </button>
-                <a
-                  href={resetSuccess.resetUrl}
-                  className="flex-1 py-2.5 px-4 text-xs font-semibold rounded-lg bg-black text-white hover:bg-gray-800 text-center transition-colors"
-                >
-                  Open Link Now
-                </a>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                <Button
+                  text="Close"
+                  type="button"
+                  onClick={handleModalClose}
+                />
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="mt-6">
+            <form onSubmit={handleSubmit} className="mt-5">
               <InputField
                 name="email"
                 label="Email Address"
                 type="email"
                 placeholder="Enter your registered email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError("");
+                  if (devHint) setDevHint("");
+                }}
               />
 
               <div className="mt-6">
                 <Button
-                  text="Send Reset Link"
+                  text={
+                    cooldown > 0
+                      ? `Please wait ${cooldown}s`
+                      : "Send Reset Link"
+                  }
                   type="submit"
                   loading={loading}
+                  disabled={loading || cooldown > 0}
                 />
               </div>
             </form>

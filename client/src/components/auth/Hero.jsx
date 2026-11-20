@@ -1,20 +1,18 @@
-import { Rocket } from "lucide-react";
+import { BrandLogo } from "../common/BrandLogo";
 
 function Hero() {
   return (
     <div className="flex flex-col items-center justify-center py-4">
       {/* Logo */}
-      <div className="bg-black rounded-xl p-2.5 shadow-md">
-        <Rocket className="w-7 h-7 text-white" />
-      </div>
+      <BrandLogo className="w-14 h-14" />
 
       {/* Heading */}
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">
+      <h1 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
         CareerForge-AI
       </h1>
 
       {/* Subtitle */}
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
         Ace your next interview with AI-powered prep
       </p>
     </div>

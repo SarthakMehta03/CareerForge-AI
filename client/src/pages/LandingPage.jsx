@@ -9,7 +9,7 @@ import LandingFooter from "../components/landing/LandingFooter";
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 flex flex-col font-sans selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-white dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white transition-colors duration-150">
       {/* SECTION A: Navigation Bar */}
       <LandingNavbar />
 

@@ -6,6 +6,8 @@ const {
   getUserCredits,
   generateQuestions,
   submitAnswers,
+  getSessionResult,
+  getUserAptitudeHistory,
 } = require("../controllers/aptitudeController");
 
 const router = express.Router();
@@ -49,6 +51,8 @@ const flexibleAuth = async (req, res, next) => {
 // Route definitions
 router.get("/config", flexibleAuth, getAptitudeConfig);
 router.get("/credits", flexibleAuth, getUserCredits);
+router.get("/history", flexibleAuth, getUserAptitudeHistory);
+router.get("/session/:sessionId", flexibleAuth, getSessionResult);
 router.post("/generate", flexibleAuth, generateQuestions);
 router.post("/submit", flexibleAuth, submitAnswers);
 

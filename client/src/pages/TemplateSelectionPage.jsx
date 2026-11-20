@@ -241,7 +241,7 @@ export default function TemplateSelectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
@@ -249,7 +249,7 @@ export default function TemplateSelectionPage() {
         <div className="mb-4">
           <button
             onClick={() => navigate("/resumes")}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-black px-2 py-1 rounded-md hover:bg-gray-200/60 transition cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-800 transition cursor-pointer"
           >
             <ArrowLeft size={14} />
             <span>Back to All Resumes</span>
@@ -258,10 +258,10 @@ export default function TemplateSelectionPage() {
 
         {/* Header matching FlowCV */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
             Start building your resume
           </h1>
-          <p className="text-sm text-gray-500 mt-1.5 font-normal">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 font-normal">
             Choose a design you like. You can customize or switch it later.
           </p>
         </div>
@@ -280,14 +280,14 @@ export default function TemplateSelectionPage() {
                   onClick={() => setActiveCategory(tab.id)}
                   className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
                     isActive
-                      ? "bg-white border border-gray-400 text-gray-900 shadow-2xs font-semibold"
-                      : "bg-white/70 border border-gray-200/90 text-gray-600 hover:text-gray-900 hover:bg-white"
+                      ? "bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-600 text-gray-900 dark:text-white shadow-2xs font-semibold"
+                      : "bg-white/70 dark:bg-gray-900/70 border border-gray-200/90 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-800"
                   }`}
                 >
                   {Icon && (
                     <Icon
                       size={14}
-                      className={isActive ? "text-gray-900" : "text-gray-500"}
+                      className={isActive ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}
                     />
                   )}
                   <span>{tab.label}</span>
@@ -300,7 +300,7 @@ export default function TemplateSelectionPage() {
           <button
             type="button"
             onClick={() => setIsImportModalOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white border border-gray-900 text-gray-900 text-sm font-bold hover:bg-gray-50 transition cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-900 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer shadow-2xs"
           >
             <Upload size={15} />
             <span>Import existing resume</span>
@@ -320,12 +320,12 @@ export default function TemplateSelectionPage() {
                 className="group cursor-pointer select-none flex flex-col"
               >
                 {/* FlowCV A4 Sheet Thumbnail */}
-                <div className="relative aspect-[1/1.414] bg-white rounded-xl shadow-xs border border-gray-200/80 overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-1.5">
+                <div className="relative aspect-[1/1.414] bg-white rounded-xl shadow-xs border border-gray-200/80 dark:border-gray-800 overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-1.5">
                   <PreviewComp />
 
                   {/* FlowCV Centered Hover Action Button */}
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center p-6">
-                    <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-bold text-xs shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-200">
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-gray-900 text-black dark:text-white font-bold text-xs shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-200">
                       <span>{isCreating ? "Creating..." : "Use This Template"}</span>
                       <ArrowRight size={14} />
                     </span>
@@ -334,7 +334,7 @@ export default function TemplateSelectionPage() {
 
                 {/* FlowCV Label Below: UPPERCASE BOLD */}
                 <div className="mt-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700 group-hover:text-black">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white">
                     {template.displayName || template.name.toUpperCase()}
                   </h3>
                 </div>

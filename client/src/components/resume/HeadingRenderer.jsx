@@ -1,19 +1,41 @@
 import React from "react";
-import { getContrastTextColor } from "../../utils/themeStyles";
+import { getContrastTextColor, getFontFamily } from "../../utils/themeStyles";
 
 export function HeadingRenderer({
   title,
   icon: Icon,
   theme = {},
-  headingTextColor = "#111827",
-  headingBorderColor = "#E5E7EB",
+  headingTextColor,
+  headingBorderColor,
   className = "",
 }) {
-  const headingStyle = theme.headingStyle || "line-bottom"; // 'line-bottom' | 'left-bar' | 'pill' | 'minimal'
-  const capitalization = theme.capitalization === "capitalize" ? "capitalize" : "uppercase";
+  const headingStyle = theme.headingStyle || "line-bottom"; // 'line-bottom' | 'left-bar' | 'pill' | 'boxed' | 'line-top' | 'minimal'
+  const capitalization =
+    theme.capitalization === "capitalize"
+      ? "capitalize"
+      : theme.capitalization === "lowercase"
+      ? "lowercase"
+      : "uppercase";
   const iconMode = theme.headingIcons || "none"; // 'none' | 'outline' | 'filled'
   const accentColor = theme.primaryColor || "#000000";
   const contrastColor = getContrastTextColor(accentColor);
+
+  const targets = theme.accentTargets || {
+    name: true,
+    jobTitle: true,
+    headings: true,
+    headingLine: true,
+  };
+  const activeTextColor =
+    headingTextColor || (targets.headings !== false ? accentColor : "#111827");
+  const activeBorderColor =
+    headingBorderColor || (targets.headingLine !== false ? accentColor : "#E5E7EB");
+
+  const fontStyle = {
+    fontFamily: getFontFamily(theme.bodyFont),
+    fontSize: theme.headingFontSize ? `${theme.headingFontSize}px` : undefined,
+    color: activeTextColor,
+  };
 
   const renderIcon = () => {
     if (!Icon || iconMode === "none") return null;
@@ -40,13 +62,10 @@ export function HeadingRenderer({
     return (
       <div
         className={`resume-heading-block flex items-center pl-2.5 py-0.5 border-l-4 mb-2.5 ${className}`}
-        style={{ borderLeftColor: accentColor }}
+        style={{ borderLeftColor: activeBorderColor }}
       >
         {renderIcon()}
-        <h2
-          className={`text-xs font-bold tracking-wider ${capitalization}`}
-          style={{ color: headingTextColor }}
-        >
+        <h2 className={`font-bold tracking-wider ${capitalization}`} style={fontStyle}>
           {title}
         </h2>
       </div>
@@ -58,8 +77,12 @@ export function HeadingRenderer({
     return (
       <div className={`resume-heading-block mb-2.5 ${className}`}>
         <div
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-2xs"
-          style={{ backgroundColor: accentColor, color: contrastColor }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold shadow-2xs"
+          style={{
+            backgroundColor: accentColor,
+            color: contrastColor,
+            fontSize: theme.headingFontSize ? `${theme.headingFontSize}px` : "12px",
+          }}
         >
           {Icon && iconMode !== "none" && <Icon size={12} strokeWidth={2.5} />}
           <span className={capitalization}>{title}</span>
@@ -68,32 +91,56 @@ export function HeadingRenderer({
     );
   }
 
-  // 3. Minimal Clean Text Style (no lines or pills)
-  if (headingStyle === "minimal") {
+  // 3. Boxed Style
+  if (headingStyle === "boxed") {
     return (
-      <div className={`resume-heading-block flex items-center mb-1.5 ${className}`}>
+      <div
+        className={`resume-heading-block flex items-center px-2.5 py-1 border rounded-md mb-2.5 ${className}`}
+        style={{ borderColor: activeBorderColor, backgroundColor: "#f9fafb" }}
+      >
         {renderIcon()}
-        <h2
-          className={`text-xs font-extrabold tracking-wider ${capitalization}`}
-          style={{ color: headingTextColor }}
-        >
+        <h2 className={`font-bold tracking-wider ${capitalization}`} style={fontStyle}>
           {title}
         </h2>
       </div>
     );
   }
 
-  // 4. Default: Line Bottom (Underline across width)
+  // 4. Line Top (Overline)
+  if (headingStyle === "line-top") {
+    return (
+      <div
+        className={`resume-heading-block flex items-center border-t pt-1 mb-2.5 ${className}`}
+        style={{ borderTopColor: activeBorderColor }}
+      >
+        {renderIcon()}
+        <h2 className={`font-bold tracking-wider ${capitalization}`} style={fontStyle}>
+          {title}
+        </h2>
+      </div>
+    );
+  }
+
+  // 5. Minimal Clean Text Style (no lines or pills)
+  if (headingStyle === "minimal") {
+    return (
+      <div className={`resume-heading-block flex items-center mb-1.5 ${className}`}>
+        {renderIcon()}
+        <h2 className={`font-extrabold tracking-wider ${capitalization}`} style={fontStyle}>
+          {title}
+        </h2>
+      </div>
+    );
+  }
+
+  // 6. Default: Line Bottom (Underline across width)
   return (
     <div
       className={`resume-heading-block flex items-center border-b pb-1 mb-2.5 ${className}`}
-      style={{ borderBottomColor: headingBorderColor }}
+      style={{ borderBottomColor: activeBorderColor }}
     >
       {renderIcon()}
-      <h2
-        className={`text-xs font-bold tracking-wider ${capitalization}`}
-        style={{ color: headingTextColor }}
-      >
+      <h2 className={`font-bold tracking-wider ${capitalization}`} style={fontStyle}>
         {title}
       </h2>
     </div>

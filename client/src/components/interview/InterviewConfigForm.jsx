@@ -507,10 +507,10 @@ function InterviewConfigForm({ onStartInterview, isStarting = false, aiConfig = 
                   disabled={isStarting}
                   onClick={() => setConfig((prev) => ({ ...prev, questionCount: num }))}
                   aria-pressed={config.questionCount === num}
-                  className={`w-11 h-9 rounded-lg text-xs font-bold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                  className={`w-11 h-9 rounded-lg text-xs font-bold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-blue-500 ${
                     config.questionCount === num
-                      ? "bg-black text-white shadow-2xs"
-                      : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-100"
+                      ? "bg-gray-900 text-white shadow-2xs dark:bg-blue-600 dark:text-white font-bold"
+                      : "bg-white dark:bg-[#141824] border border-gray-200 dark:border-[#232a3d] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1c2234]"
                   }`}
                 >
                   {num}
@@ -557,11 +557,11 @@ function InterviewConfigForm({ onStartInterview, isStarting = false, aiConfig = 
         </div>
 
         {/* Submit Action */}
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 border-t border-gray-100">
+        <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 border-t border-gray-100 dark:border-[#232a3d]">
           <button
             type="submit"
             disabled={isStarting}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-black text-white text-xs font-bold hover:bg-gray-900 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-98 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-98 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
           >
             {isStarting ? (
               <>
@@ -621,7 +621,7 @@ function InterviewConfigForm({ onStartInterview, isStarting = false, aiConfig = 
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(false)}
-                    className="px-4 py-2 rounded-xl bg-black text-white text-xs font-semibold hover:bg-gray-900 transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition cursor-pointer shadow-xs"
                   >
                     Adjust Options
                   </button>

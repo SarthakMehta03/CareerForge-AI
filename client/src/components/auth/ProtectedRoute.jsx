@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { getToken, getCurrentUser, fetchMe } from "../../services/authService";
 
 function ProtectedRoute({ children }) {
+  const location = useLocation();
   const token = getToken();
   const user = getCurrentUser();
   const [isVerifying, setIsVerifying] = useState(true);
@@ -39,7 +40,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isValid) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

@@ -107,7 +107,7 @@ function FeedbackCard({ result, onRetry, onDashboard, onHistory }) {
         <button
           type="button"
           onClick={onRetry}
-          className="px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
         >
           <RotateCcw size={14} />
           Practice Again

@@ -63,21 +63,21 @@ function PasswordChangeModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 flex items-center justify-center text-white dark:text-blue-400">
               <Lock size={16} />
             </div>
-            <h3 className="text-base font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Change Account Password
             </h3>
           </div>
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-gray-400 hover:text-gray-700 p-1 rounded-lg transition"
+            className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded-lg transition"
           >
             <X size={18} />
           </button>
@@ -86,7 +86,7 @@ function PasswordChangeModal({ isOpen, onClose }) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs">
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-850 text-red-700 dark:text-red-300 rounded-xl text-xs">
               <AlertCircle size={16} className="shrink-0" />
               <span>{error}</span>
             </div>
@@ -94,7 +94,7 @@ function PasswordChangeModal({ isOpen, onClose }) {
 
           {/* Current Password */}
           <div>
-            <label className="block mb-1 text-xs font-medium text-gray-700">
+            <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
               Current Password
             </label>
             <div className="relative">
@@ -104,12 +104,12 @@ function PasswordChangeModal({ isOpen, onClose }) {
                 value={formData.currentPassword}
                 onChange={handleChange}
                 placeholder="Enter current password"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 pr-10 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-850 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition"
               >
                 {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
@@ -118,7 +118,7 @@ function PasswordChangeModal({ isOpen, onClose }) {
 
           {/* New Password */}
           <div>
-            <label className="block mb-1 text-xs font-medium text-gray-700">
+            <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
               New Password
             </label>
             <div className="relative">
@@ -128,12 +128,12 @@ function PasswordChangeModal({ isOpen, onClose }) {
                 value={formData.newPassword}
                 onChange={handleChange}
                 placeholder="Enter new password (min. 6 characters)"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 pr-10 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-850 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
               />
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition"
               >
                 {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
@@ -142,7 +142,7 @@ function PasswordChangeModal({ isOpen, onClose }) {
 
           {/* Confirm Password */}
           <div>
-            <label className="block mb-1 text-xs font-medium text-gray-700">
+            <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
               Confirm New Password
             </label>
             <div className="relative">
@@ -152,12 +152,12 @@ function PasswordChangeModal({ isOpen, onClose }) {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Re-enter new password"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 pr-10 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-850 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition"
               >
                 {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
@@ -169,14 +169,14 @@ function PasswordChangeModal({ isOpen, onClose }) {
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition"
+              className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-2 active:scale-95 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs"
             >
               {loading && <Loader2 size={13} className="animate-spin" />}
               {loading ? "Updating..." : "Update Password"}

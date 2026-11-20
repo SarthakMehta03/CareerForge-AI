@@ -22,6 +22,26 @@ const protect = async (req, res, next) => {
         });
       }
 
+      if (req.user.status === "suspended") {
+        return res.status(403).json({
+          success: false,
+          message: "Your account has been suspended. Please contact support.",
+        });
+      }
+
+      // Invalidate tokens issued before a password reset / revocation
+      if (req.user.passwordChangedAt && decoded.iat) {
+        const changedTimestamp = Math.floor(
+          new Date(req.user.passwordChangedAt).getTime() / 1000
+        );
+        if (decoded.iat < changedTimestamp) {
+          return res.status(401).json({
+            success: false,
+            message: "Password was changed recently. Please log in again.",
+          });
+        }
+      }
+
       next();
     } catch (error) {
       console.error("Auth Middleware Error:", error.message);
@@ -40,4 +60,22 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required",
+    });
+  }
+
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Administrator privileges required.",
+    });
+  }
+
+  next();
+};
+
+module.exports = { protect, requireAdmin };

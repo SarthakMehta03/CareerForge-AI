@@ -13,11 +13,10 @@ import { getResultById, getAptitudeHistory } from "../services/aptitudeService";
 function AptitudeResult() {
   const { attemptId } = useParams();
 
-  // Load result by ID or fallback to latest in history
+  // Load result by ID if provided, otherwise latest in user's history
   const result = useMemo(() => {
     if (attemptId) {
-      const found = getResultById(attemptId);
-      if (found) return found;
+      return getResultById(attemptId);
     }
     const history = getAptitudeHistory();
     return history[0] || null;
@@ -25,19 +24,19 @@ function AptitudeResult() {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
         <Navbar />
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-16 text-center space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Assessment Result Not Found
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            Assessment Result Not Found or Access Denied
           </h2>
-          <p className="text-xs text-gray-500">
-            The requested assessment record could not be located in your browser storage.
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            The requested assessment record could not be found in your active account history, or belongs to another user.
           </p>
           <div className="pt-2">
             <Link
               to="/aptitude"
-              className="px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold inline-flex items-center gap-2"
+              className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs inline-flex items-center gap-2 transition shadow-xs cursor-pointer"
             >
               Return to Aptitude Dashboard
             </Link>
@@ -53,7 +52,7 @@ function AptitudeResult() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -61,7 +60,7 @@ function AptitudeResult() {
         <div className="flex items-center justify-between">
           <Link
             to="/aptitude"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black transition"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-blue-400 transition"
           >
             <ChevronLeft size={16} />
             Back to Aptitude Dashboard
@@ -79,7 +78,7 @@ function AptitudeResult() {
 
             <Link
               to="/aptitude/test"
-              className="px-3.5 py-1.5 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
+              className="px-3.5 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
             >
               <RotateCcw size={13} />
               Take Another Test

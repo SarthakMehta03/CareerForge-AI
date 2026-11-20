@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Rocket } from "lucide-react";
+import { BrandLogo } from "../common/BrandLogo";
 
 function LandingFooter() {
   const currentYear = new Date().getFullYear();
@@ -12,7 +12,7 @@ function LandingFooter() {
   };
 
   return (
-    <footer className="bg-white border-t border-gray-200">
+    <footer className="bg-white dark:bg-[#0c0e14] border-t border-gray-200 dark:border-[#232a3d] transition-colors duration-150">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
           {/* Brand Info */}
@@ -20,16 +20,14 @@ function LandingFooter() {
             <Link
               to="/"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="inline-flex items-center gap-2.5 focus:outline-hidden"
+              className="inline-flex items-center gap-2.5 group focus:outline-hidden"
             >
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
-                <Rocket size={16} />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-gray-900">
+              <BrandLogo className="w-8 h-8" />
+              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
                 CareerForge-AI
               </span>
             </Link>
-            <p className="text-sm text-gray-600 leading-relaxed max-w-sm">
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-sm">
               A comprehensive placement preparation platform helping university
               students sharpen problem-solving skills, rehearse technical & HR
               interviews, and craft professional ATS resumes.

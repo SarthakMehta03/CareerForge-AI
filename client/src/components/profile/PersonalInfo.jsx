@@ -85,16 +85,16 @@ function PersonalInfo({ user, onProfileUpdated }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm">
-      <div className="flex items-center gap-3 pb-5 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-7 shadow-sm transition-colors">
+      <div className="flex items-center gap-3 pb-5 border-b border-gray-100 dark:border-gray-800">
+        <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 flex items-center justify-center text-white dark:text-blue-400">
           <User size={19} />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Personal Information
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Update your basic details, contact information, and public profile bio.
           </p>
         </div>
@@ -104,7 +104,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Full Name */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Full Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -115,8 +115,8 @@ function PersonalInfo({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="e.g. Alex Morgan"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.name ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-gray-50"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200`}
+                  errors.name ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700`}
               />
             </div>
             {errors.name && (
@@ -127,10 +127,10 @@ function PersonalInfo({ user, onProfileUpdated }) {
           {/* Email Address (Read-only) */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-medium text-gray-700">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Email Address
               </label>
-              <span className="text-[10px] text-gray-400 font-medium">Account Email (Verified)</span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Account Email (Verified)</span>
             </div>
             <div className="relative">
               <input
@@ -138,7 +138,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
                 name="email"
                 value={formData.email}
                 disabled
-                className="w-full h-9 rounded-lg border border-gray-200 bg-gray-100/70 px-3 text-xs text-gray-500 cursor-not-allowed outline-none"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-100/70 dark:bg-gray-800/40 px-3 text-xs text-gray-500 dark:text-gray-400 cursor-not-allowed outline-none"
               />
             </div>
           </div>
@@ -147,7 +147,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Phone */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Phone Number
             </label>
             <input
@@ -157,8 +157,8 @@ function PersonalInfo({ user, onProfileUpdated }) {
               onChange={handleChange}
               placeholder="e.g. +1 (555) 000-1234"
               className={`w-full h-9 rounded-lg border ${
-                errors.phone ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-gray-50"
-              } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200`}
+                errors.phone ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+              } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700`}
             />
             {errors.phone && (
               <p className="mt-1 text-[11px] text-red-500">{errors.phone}</p>
@@ -167,7 +167,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
 
           {/* City */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               City
             </label>
             <input
@@ -176,7 +176,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
               value={formData.city}
               onChange={handleChange}
               placeholder="e.g. San Francisco / Bengaluru"
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
             />
           </div>
         </div>
@@ -184,7 +184,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* State */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               State / Province
             </label>
             <input
@@ -193,13 +193,13 @@ function PersonalInfo({ user, onProfileUpdated }) {
               value={formData.state}
               onChange={handleChange}
               placeholder="e.g. California / Karnataka"
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
             />
           </div>
 
           {/* Country */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Country
             </label>
             <input
@@ -208,7 +208,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
               value={formData.country}
               onChange={handleChange}
               placeholder="e.g. United States / India"
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
             />
           </div>
         </div>
@@ -216,10 +216,10 @@ function PersonalInfo({ user, onProfileUpdated }) {
         {/* Bio */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium text-gray-700">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
               Professional Bio
             </label>
-            <span className="text-[10px] text-gray-400">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">
               {formData.bio.length}/500 characters
             </span>
           </div>
@@ -230,7 +230,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
             value={formData.bio}
             onChange={handleChange}
             placeholder="A brief summary of your background, career focus, and aspirations..."
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200 resize-none"
+            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700 resize-none"
           />
         </div>
 
@@ -238,7 +238,7 @@ function PersonalInfo({ user, onProfileUpdated }) {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-2 active:scale-95 disabled:opacity-50"
+            className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold rounded-lg text-xs transition flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             {loading ? "Saving Changes..." : "Save Personal Info"}

@@ -5,16 +5,20 @@ function Button({
   type = "button",
   loading = false,
   disabled = false,
+  onClick,
 }) {
   return (
     <button
       type={type}
+      onClick={onClick}
       disabled={loading || disabled}
       className="
         w-full
         h-9
-        bg-black
+        bg-gray-900
+        dark:bg-blue-600
         text-white
+        dark:text-white
         text-xs
         rounded-md
         font-semibold
@@ -24,16 +28,19 @@ function Button({
         gap-2
         transition-all
         duration-200
-        hover:bg-gray-900
+        hover:bg-black
+        dark:hover:bg-blue-500
         active:scale-95
         disabled:opacity-60
         disabled:cursor-not-allowed
+        cursor-pointer
+        shadow-xs
       "
     >
       {loading && (
         <Loader2
           size={15}
-          className="animate-spin"
+          className="animate-spin text-white dark:text-gray-950"
         />
       )}
 

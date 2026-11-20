@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -25,6 +25,10 @@ function AptitudeHistory() {
 
   const [history, setHistory] = useState(() => getAptitudeHistory());
   const [showClearModal, setShowClearModal] = useState(false);
+
+  useEffect(() => {
+    setHistory(getAptitudeHistory());
+  }, []);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,7 +81,7 @@ function AptitudeHistory() {
   }, [history, searchQuery, typeFilter, categoryFilter, sortBy]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -95,7 +99,7 @@ function AptitudeHistory() {
         {/* Top Header Card */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-gray-900 dark:bg-blue-500/15 dark:border dark:border-blue-500/25 flex items-center justify-center text-white dark:text-blue-400 shrink-0 shadow-xs">
               <History size={22} />
             </div>
 
@@ -128,7 +132,7 @@ function AptitudeHistory() {
 
             <Link
               to="/aptitude/test"
-              className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs"
+              className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
             >
               <Plus size={14} />
               New Test

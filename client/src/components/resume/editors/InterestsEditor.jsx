@@ -1,61 +1,62 @@
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useResume } from "../../../context/ResumeContext";
+
+// Safely extract the display name from an interest item (handles both strings and objects)
+const getName = (item) =>
+  typeof item === "object" && item !== null ? item?.name || "" : String(item || "");
+
+// Safely extract a unique key from an interest item
+const getKey = (item, idx) =>
+  typeof item === "object" && item !== null ? item?.id || `int_${idx}` : `int_${item}_${idx}`;
 
 export function InterestsEditor() {
   const { resume, setResume } = useResume();
-  const interests = Array.isArray(resume.interests) ? resume.interests : [];
+  const interests = resume.interests || [];
   const [newInterest, setNewInterest] = useState("");
 
-  const getInterestName = (interest) =>
-    typeof interest === "string" ? interest : interest?.name ?? "";
-
   const handleAdd = () => {
-    const value = newInterest.trim();
-    if (!value) return;
+    const val = newInterest.trim();
+    if (!val) return;
 
+    // Check for duplicates (handle both strings and objects)
     const alreadyExists = interests.some(
-      (interest) =>
-        getInterestName(interest).toLowerCase() === value.toLowerCase()
+      (item) => getName(item).toLowerCase() === val.toLowerCase()
     );
     if (alreadyExists) return;
 
-    setResume((prev) => ({
-      ...prev,
-      interests: [...(Array.isArray(prev.interests) ? prev.interests : []), value],
-    }));
+    // Push as object with id for consistency with ResumeBuilder entry system
+    const newEntry = { id: `int_${Date.now()}`, name: val };
+    setResume((prev) => ({ ...prev, interests: [...(prev.interests || []), newEntry] }));
     setNewInterest("");
   };
 
-  const handleRemove = (itemToRemove) => {
+  const handleRemove = (targetItem) => {
     setResume((prev) => ({
       ...prev,
-      interests: (Array.isArray(prev.interests) ? prev.interests : []).filter(
-        (interest) => interest !== itemToRemove
-      ),
+      interests: (prev.interests || []).filter((item) => {
+        if (typeof targetItem === "object" && targetItem !== null) {
+          return typeof item === "object" ? item.id !== targetItem.id : true;
+        }
+        // string comparison fallback
+        return getName(item) !== getName(targetItem);
+      }),
     }));
   };
 
   return (
     <div className="space-y-4">
       <div className="border-b border-gray-200 pb-3 mb-4">
-        <h2 className="text-lg font-bold text-gray-900">Interests &amp; Hobbies</h2>
-        <p className="text-xs text-gray-500">
-          Add personal interests, open-source hobbies, or activity involvement.
-        </p>
+        <h2 className="text-lg font-bold text-gray-900">Interests & Hobbies</h2>
+        <p className="text-xs text-gray-500">Add personal interests, open-source hobbies, or activity involvement.</p>
       </div>
 
       <div className="flex gap-2">
         <input
           type="text"
           value={newInterest}
-          onChange={(event) => setNewInterest(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              handleAdd();
-            }
-          }}
+          onChange={(e) => setNewInterest(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAdd())}
           placeholder="e.g. Open Source, Photography, Chess, Marathons..."
           className="flex-1 rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 focus:border-black focus:ring-1 focus:ring-black outline-none transition"
         />
@@ -70,27 +71,20 @@ export function InterestsEditor() {
 
       <div className="flex flex-wrap gap-2 pt-2">
         {interests.length === 0 ? (
-          <p className="text-xs text-gray-400 italic">
-            No interests added yet.
-          </p>
+          <p className="text-xs text-gray-400 italic">No interests added yet.</p>
         ) : (
-          interests.map((item, index) => {
-            const name = getInterestName(item);
-            const key =
-              typeof item === "object" && item !== null
-                ? item.id ?? `${name}-${index}`
-                : `${name}-${index}`;
-
+          interests.map((item, idx) => {
+            const displayName = getName(item);
+            if (!displayName) return null;
             return (
               <div
-                key={key}
+                key={getKey(item, idx)}
                 className="flex items-center gap-1.5 bg-gray-100 border border-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-semibold"
               >
-                <span>{name}</span>
+                <span>{displayName}</span>
                 <button
                   type="button"
                   onClick={() => handleRemove(item)}
-                  aria-label={`Remove ${name}`}
                   className="text-gray-400 hover:text-red-600 transition"
                 >
                   <X size={14} />

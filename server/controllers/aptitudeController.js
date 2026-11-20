@@ -427,6 +427,27 @@ const submitAnswers = async (req, res) => {
       });
     }
 
+    // Ownership check: If session was generated for an authenticated user,
+    // verify that the submitter is the same authenticated user.
+    if (session.userId) {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required to submit this assessment session.",
+        });
+      }
+      if (
+        session.userId.toString() !== req.user._id.toString() &&
+        session.userId.toString() !== (req.user.id || "").toString() &&
+        req.user.role !== "admin"
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not authorized to submit this assessment session.",
+        });
+      }
+    }
+
     // Prevent tampering with already-submitted sessions
     if (session.isSubmitted) {
       return res.status(400).json({
@@ -505,9 +526,120 @@ const submitAnswers = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/aptitude/session/:sessionId
+ * Retrieves detailed session evaluation with strict ownership verification
+ */
+const getSessionResult = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId || typeof sessionId !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Session ID is required.",
+      });
+    }
+
+    const session = await AptitudeSession.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Assessment session not found.",
+      });
+    }
+
+    // Strict ownership verification: If session was created by a user, only that user or admin may view it
+    if (session.userId) {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required to view this assessment session.",
+        });
+      }
+      if (
+        session.userId.toString() !== req.user._id.toString() &&
+        session.userId.toString() !== (req.user.id || "").toString() &&
+        req.user.role !== "admin"
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: You do not have permission to view this assessment session.",
+        });
+      }
+    }
+
+    if (!session.isSubmitted) {
+      return res.status(400).json({
+        success: false,
+        message: "This assessment session has not been submitted yet.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      result: {
+        sessionId: session.sessionId,
+        category: session.category,
+        topic: session.topic,
+        difficulty: session.difficulty,
+        totalQuestions: session.totalQuestions,
+        score: session.score,
+        accuracy: session.accuracy,
+        timeSpentSeconds: session.timeSpentSeconds,
+        submittedAt: session.submittedAt,
+        questions: session.questions,
+      },
+    });
+  } catch (error) {
+    console.error("[AptitudeController] Get session error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while retrieving assessment session.",
+    });
+  }
+};
+
+/**
+ * GET /api/aptitude/history
+ * Retrieves submitted sessions belonging strictly to the authenticated user
+ */
+const getUserAptitudeHistory = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required to view assessment history.",
+      });
+    }
+
+    // Filter strictly by server-verified req.user._id (never trust client-supplied input)
+    const sessions = await AptitudeSession.find({
+      userId: req.user._id,
+      isSubmitted: true,
+    })
+      .sort({ submittedAt: -1 })
+      .limit(50)
+      .select("-questions.correctOptionId -questions.explanation");
+
+    return res.status(200).json({
+      success: true,
+      sessions,
+    });
+  } catch (error) {
+    console.error("[AptitudeController] Get history error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while retrieving assessment history.",
+    });
+  }
+};
+
 module.exports = {
   getAptitudeConfig,
   getUserCredits,
   generateQuestions,
   submitAnswers,
+  getSessionResult,
+  getUserAptitudeHistory,
 };

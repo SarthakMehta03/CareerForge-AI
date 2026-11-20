@@ -128,7 +128,7 @@ function AnswerEditor({
               type="button"
               disabled={disabled || isSubmitting || !answer.trim()}
               onClick={onSubmit}
-              className="px-6 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-bold flex items-center gap-2 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+              className="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-bold flex items-center gap-2 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               title={!answer.trim() ? "Type your answer before submitting" : "Submit answer for evaluation (Ctrl+Enter)"}
             >
               {isSubmitting ? (

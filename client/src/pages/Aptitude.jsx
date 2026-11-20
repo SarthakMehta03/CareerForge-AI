@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Clock, Award, History, BookOpen, Play } from "lucide-react";
 
@@ -22,7 +22,11 @@ import { APTITUDE_CATEGORIES } from "../constants/aptitudeConstants";
 import { formatTime } from "../utils/aptitudeScoring";
 
 function Aptitude() {
-  const [data] = useState(() => getAptitudeDashboardData());
+  const [data, setData] = useState(() => getAptitudeDashboardData());
+
+  useEffect(() => {
+    setData(getAptitudeDashboardData());
+  }, []);
 
   const categoryTopicCounts = {
     quantitative: QUANTITATIVE_TOPICS.length,
@@ -31,7 +35,7 @@ function Aptitude() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -148,7 +152,7 @@ function Aptitude() {
                     Recent Test Attempts
                   </h3>
                   <p className="text-[11px] text-gray-500">
-                    Your recent assessments stored in local browser history
+                    Your recent assessment history and scorecards
                   </p>
                 </div>
               </div>

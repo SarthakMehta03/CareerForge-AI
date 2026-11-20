@@ -14,10 +14,10 @@ function TimerWarningBanner({
     <div
       role="alert"
       aria-live="polite"
-      className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 shadow-xs transition"
+      className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-xs transition"
     >
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+        <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center shrink-0 text-amber-700 dark:text-amber-400">
           <AlertTriangle size={18} aria-hidden="true" />
         </div>
         <div>
@@ -34,7 +34,7 @@ function TimerWarningBanner({
         <button
           type="button"
           onClick={onDismiss}
-          className="p-1.5 rounded-lg text-amber-700 hover:text-amber-900 hover:bg-amber-100/80 transition cursor-pointer shrink-0"
+          className="p-1.5 rounded-lg text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 hover:bg-amber-100/80 dark:hover:bg-amber-900/40 transition cursor-pointer shrink-0"
           title="Dismiss notice"
           aria-label="Dismiss 1 minute warning"
         >

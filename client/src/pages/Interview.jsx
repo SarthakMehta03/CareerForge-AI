@@ -22,7 +22,7 @@ function Interview() {
   const navigate = useNavigate();
   const formRef = useRef(null);
 
-  const [stats] = useState(() => getInterviewStats());
+  const [stats, setStats] = useState(() => getInterviewStats());
   const [aiConfig, setAiConfig] = useState(null);
   const [isStarting, setIsStarting] = useState(false);
   const [quotaModal, setQuotaModal] = useState({ show: false, message: "", fallbackQuestions: null, pendingConfig: null });
@@ -30,6 +30,7 @@ function Interview() {
 
   useEffect(() => {
     let active = true;
+    setStats(getInterviewStats());
     const loadAiConfig = async () => {
       try {
         const cfg = await fetchInterviewAIConfig();
@@ -161,7 +162,7 @@ function Interview() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -219,7 +220,7 @@ function Interview() {
                 <button
                   type="button"
                   onClick={handleUseFallback}
-                  className="px-4 py-2 rounded-xl bg-black text-white text-xs font-semibold hover:bg-gray-900 transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition cursor-pointer shadow-xs"
                 >
                   Continue with Curated Set
                 </button>
@@ -267,7 +268,7 @@ function Interview() {
               <button
                 type="button"
                 onClick={() => setCreditModal({ show: false, balance: 0, required: 0, nextReset: "" })}
-                className="px-4 py-2 rounded-xl bg-black text-white text-xs font-semibold hover:bg-gray-900 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-semibold transition cursor-pointer shadow-xs"
               >
                 Close
               </button>

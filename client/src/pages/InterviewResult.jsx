@@ -45,7 +45,7 @@ function InterviewResult() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -57,17 +57,17 @@ function InterviewResult() {
 
             <div>
               <h2 className="text-base font-bold text-gray-900">
-                No Evaluation Result Found
+                No Evaluation Result Found or Access Denied
               </h2>
               <p className="text-xs text-gray-500 mt-1">
-                The requested interview evaluation could not be located in your browser session.
+                The requested interview evaluation could not be located in your account history, or belongs to another user.
               </p>
             </div>
 
             <div className="pt-2">
               <Link
                 to="/interviews"
-                className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition active:scale-95 inline-flex items-center gap-1.5"
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white rounded-lg text-xs font-semibold transition active:scale-95 inline-flex items-center gap-1.5 shadow-xs"
               >
                 <ArrowLeft size={13} />
                 Return to Interview Dashboard

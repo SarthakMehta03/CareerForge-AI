@@ -24,13 +24,13 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
 
   return (
     <>
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm transition-colors">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           {/* Left: Avatar + Details */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left w-full md:w-auto">
             {/* Avatar container */}
             <div className="relative group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 border-2 border-gray-200 shadow-sm flex items-center justify-center">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-center">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -38,7 +38,7 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-black text-white text-2xl font-bold">
+                  <div className="w-full h-full flex items-center justify-center bg-gray-900 dark:bg-blue-500/15 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/25 text-2xl font-bold">
                     {user?.name ? user.name.charAt(0).toUpperCase() : <UserIcon size={36} />}
                   </div>
                 )}
@@ -49,7 +49,7 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
                 type="button"
                 onClick={() => setIsAvatarModalOpen(true)}
                 title="Change Photo"
-                className="absolute -bottom-2 -right-2 p-2 bg-black text-white rounded-xl shadow-md hover:bg-gray-800 transition active:scale-95 border-2 border-white"
+                className="absolute -bottom-2 -right-2 p-2 bg-gray-900 dark:bg-blue-600 text-white dark:text-white rounded-xl shadow-md hover:bg-black dark:hover:bg-blue-500 transition active:scale-95 border-2 border-white dark:border-[#141824] cursor-pointer"
               >
                 <Camera size={15} />
               </button>
@@ -58,31 +58,31 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
             {/* User Meta */}
             <div className="space-y-1.5 flex-1">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                   {user?.name || "Student"}
                 </h1>
                 {user?.role === "admin" && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-gray-900 dark:bg-blue-500/15 border border-transparent dark:border-blue-500/30 text-white dark:text-blue-400 px-2 py-0.5 rounded-md">
                     <ShieldCheck size={12} />
                     Admin
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-y-1 gap-x-4 text-xs text-gray-500">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-y-1 gap-x-4 text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1.5">
-                  <Mail size={14} className="text-gray-400" />
+                  <Mail size={14} className="text-gray-400 dark:text-gray-500" />
                   {user?.email || "No email"}
                 </span>
 
                 <span className="flex items-center gap-1.5">
-                  <Briefcase size={14} className="text-gray-400" />
-                  <span className="font-medium text-gray-700">{targetRole}</span>
+                  <Briefcase size={14} className="text-gray-400 dark:text-gray-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{targetRole}</span>
                 </span>
               </div>
 
               {user?.bio && (
-                <p className="text-xs text-gray-600 line-clamp-2 max-w-xl pt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 max-w-xl pt-1">
                   {user.bio}
                 </p>
               )}
@@ -92,13 +92,13 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
           {/* Right: Actions & Completion Badge */}
           <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-end gap-3 w-full md:w-auto shrink-0">
             {/* Completion Pill */}
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gray-50 border border-gray-200">
-              <Award size={18} className="text-black" />
+            <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
+              <Award size={18} className="text-black dark:text-white" />
               <div className="text-right">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   Profile Strength
                 </p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
                   {completionPercentage}% Complete
                 </p>
               </div>
@@ -109,7 +109,7 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
               <button
                 type="button"
                 onClick={() => setIsAvatarModalOpen(true)}
-                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition"
+                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
               >
                 Change Photo
               </button>
@@ -118,7 +118,7 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(true)}
-                  className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-1.5"
                   title="Change Password"
                 >
                   <KeyRound size={13} />
@@ -130,7 +130,7 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
                 <button
                   type="button"
                   onClick={onQuickEditClick}
-                  className="flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg bg-black text-white hover:bg-gray-900 transition active:scale-95"
+                  className="flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white transition active:scale-95 shadow-xs cursor-pointer"
                 >
                   Edit Profile
                 </button>
@@ -139,7 +139,7 @@ function ProfileHeader({ user, completion, onProfileUpdated, onQuickEditClick })
               <button
                 type="button"
                 onClick={handleLogout}
-                className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:text-red-600 hover:border-red-200 hover:bg-red-50/50 transition flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/40 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition flex items-center gap-1.5 cursor-pointer"
                 title="Log Out"
               >
                 <LogOut size={13} />

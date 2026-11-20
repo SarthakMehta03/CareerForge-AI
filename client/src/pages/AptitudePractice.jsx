@@ -18,6 +18,7 @@ import {
   Check,
   X,
   Info,
+  LogOut,
 } from "lucide-react";
 
 import Navbar from "../components/auth/Navbar";
@@ -423,7 +424,7 @@ function AptitudePractice() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0e14] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-150">
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -431,7 +432,7 @@ function AptitudePractice() {
         <div className="flex items-center justify-between">
           <Link
             to="/aptitude/topics"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black transition"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-blue-400 transition"
           >
             <ChevronLeft size={16} />
             Back to Topics
@@ -445,9 +446,10 @@ function AptitudePractice() {
                   setIsSessionActive(false);
                 }
               }}
-              className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition"
+              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs hover:shadow-sm transition cursor-pointer"
             >
-              Exit Practice
+              <LogOut size={13} />
+              <span>Exit Practice</span>
             </button>
           )}
         </div>
@@ -592,7 +594,7 @@ function AptitudePractice() {
                   type="button"
                   onClick={handleOpenGenerateModal}
                   disabled={isGenerating || (aiConfig && !aiConfig.aiEnabled)}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-xs"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-xs cursor-pointer"
                 >
                   {isGenerating ? (
                     <>
@@ -670,9 +672,9 @@ function AptitudePractice() {
                   type="button"
                   onClick={handleNextQuestion}
                   disabled={currentIndex === questions.length - 1}
-                  className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold flex items-center gap-1 transition"
+                  className="px-3.5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 text-xs font-semibold flex items-center gap-1 transition active:scale-95 shadow-xs cursor-pointer"
                 >
-                  Next
+                  <span>Next</span>
                   <ChevronRight size={14} />
                 </button>
               </div>
@@ -686,7 +688,7 @@ function AptitudePractice() {
                         type="button"
                         onClick={handleStandardSubmitAnswer}
                         disabled={!selectedOptionId}
-                        className="px-5 py-2 rounded-xl bg-black text-white hover:bg-gray-900 disabled:opacity-50 text-xs font-semibold transition active:scale-95 shadow-xs"
+                        className="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold disabled:opacity-50 text-xs transition active:scale-95 shadow-xs cursor-pointer"
                       >
                         Check Answer
                       </button>
@@ -694,7 +696,7 @@ function AptitudePractice() {
                       <button
                         type="button"
                         onClick={handleNextQuestion}
-                        className="px-5 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs"
+                        className="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
                       >
                         Next Question
                         <ArrowRight size={14} />
@@ -703,7 +705,7 @@ function AptitudePractice() {
                       <button
                         type="button"
                         onClick={handleFinishSession}
-                        className="px-5 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-xs"
+                        className="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
                       >
                         Finish Practice
                         <CheckCircle2 size={14} />
@@ -718,7 +720,7 @@ function AptitudePractice() {
                     type="button"
                     onClick={handleFinishSession}
                     disabled={isSubmittingAI}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 disabled:opacity-50 text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-xs"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold disabled:opacity-50 text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-xs cursor-pointer"
                   >
                     {isSubmittingAI ? (
                       <>
@@ -779,7 +781,7 @@ function AptitudePractice() {
 
                 <Link
                   to="/aptitude/test"
-                  className="px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold transition"
+                  className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs transition shadow-xs cursor-pointer"
                 >
                   Take Timed Mock Test
                 </Link>
@@ -905,7 +907,7 @@ function AptitudePractice() {
                   type="button"
                   onClick={handleGenerateAIQuestions}
                   disabled={isGenerating}
-                  className="px-5 py-2.5 rounded-xl bg-black hover:bg-gray-900 text-white text-xs font-semibold flex items-center gap-2 transition shadow-xs disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs flex items-center gap-2 transition shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   <Sparkles size={14} className="text-amber-400" />
                   Confirm & Spend {requiredCredits} Credits
@@ -991,7 +993,7 @@ function AptitudePractice() {
                     setShowInsufficientModal(false);
                     navigate("/profile");
                   }}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-semibold transition"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs transition shadow-xs cursor-pointer"
                 >
                   View Profile & Ledger
                 </button>

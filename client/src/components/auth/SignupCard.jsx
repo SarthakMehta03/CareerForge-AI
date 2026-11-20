@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 
 import InputField from "./InputField";
 import Button from "./Button";
-import GoogleButton from "./GoogleButton";
 import Divider from "./Divider";
+import GoogleButton from "./GoogleButton";
 import PasswordStrength from "./PasswordStrength";
 import PasswordMatch from "./PasswordMatch";
 import EmailValidation from "./EmailValidation";
@@ -29,7 +29,6 @@ function SignupCard() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -38,7 +37,6 @@ function SignupCard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
     if (
@@ -52,7 +50,7 @@ function SignupCard() {
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
@@ -100,27 +98,31 @@ function SignupCard() {
           w-full
           max-w-sm
           bg-white
+          dark:bg-gray-900
           rounded-xl
           shadow-md
           border
           border-gray-200
+          dark:border-gray-800
           px-6
           py-4
+          transition-colors
+          duration-150
         "
       >
         {/* Heading */}
-        <h2 className="text-xl font-bold text-center text-gray-900">
+        <h2 className="text-xl font-bold text-center text-gray-900 dark:text-white tracking-tight">
           Create Your Account
         </h2>
 
-        <p className="mt-0.5 text-center text-xs text-gray-500">
+        <p className="mt-0.5 text-center text-xs text-gray-500 dark:text-gray-400">
           Start your journey to interview success
         </p>
 
         <form className="mt-4" onSubmit={handleSubmit}>
           {/* Error */}
           {error && (
-            <div className="mb-2 rounded-md bg-red-50 border border-red-200 px-2 py-1 text-xs text-red-600">
+            <div className="mb-2 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-2 py-1 text-xs text-red-600 dark:text-red-400">
               {error}
             </div>
           )}
@@ -144,7 +146,6 @@ function SignupCard() {
             value={formData.email}
             onChange={handleChange}
           />
-
           <EmailValidation email={formData.email} />
 
           {/* Password */}
@@ -152,11 +153,10 @@ function SignupCard() {
             name="password"
             label="Password"
             type="password"
-            placeholder="Enter your password"
+            placeholder="Create password"
             value={formData.password}
             onChange={handleChange}
           />
-
           <PasswordStrength password={formData.password} />
 
           {/* Confirm Password */}
@@ -164,50 +164,51 @@ function SignupCard() {
             name="confirmPassword"
             label="Confirm Password"
             type="password"
-            placeholder="Confirm your password"
+            placeholder="Re-enter password"
             value={formData.confirmPassword}
             onChange={handleChange}
           />
-
           <PasswordMatch
             password={formData.password}
             confirmPassword={formData.confirmPassword}
           />
 
           {/* Terms */}
-          <div className="flex items-center gap-2 mt-1 mb-2">
+          <div className="flex items-center gap-2 mt-2 mb-3">
             <input
               type="checkbox"
               name="agree"
+              id="agree"
               checked={formData.agree}
               onChange={handleChange}
-              className="w-3.5 h-3.5 accent-black"
+              className="w-3.5 h-3.5 accent-black dark:accent-white cursor-pointer"
             />
-
-            <label className="text-[11px] text-gray-600">
-              I agree to the Terms of Service
+            <label htmlFor="agree" className="text-[11px] text-gray-600 dark:text-gray-400">
+              I agree to the{" "}
+              <span className="underline cursor-pointer hover:text-black dark:hover:text-white">
+                Terms of Service
+              </span>
             </label>
           </div>
 
-          {/* Create Account */}
+          {/* Button */}
           <Button
-            text="Create Account"
+            text="Sign Up"
             type="submit"
             loading={loading}
           />
 
-          {/* Divider */}
           <Divider />
 
-          {/* Google */}
+          {/* Google Button */}
           <GoogleButton />
 
-          {/* Login */}
-          <p className="text-center text-[11px] text-gray-500 mt-2">
+          {/* Footer */}
+          <p className="text-center text-xs text-gray-600 dark:text-gray-400 mt-3">
             Already have an account?{" "}
             <span
               onClick={() => navigate("/login")}
-              className="font-semibold text-gray-900 cursor-pointer hover:underline"
+              className="font-semibold text-black dark:text-white cursor-pointer hover:underline"
             >
               Log In
             </span>

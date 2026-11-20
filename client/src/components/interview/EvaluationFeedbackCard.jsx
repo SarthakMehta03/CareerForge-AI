@@ -164,9 +164,9 @@ function EvaluationFeedbackCard({
                   <span>{item.label}</span>
                   <span>{item.score}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mb-1.5">
+                <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-1.5">
                   <div
-                    className="h-full bg-black rounded-full transition-all duration-300"
+                    className="h-full bg-gray-900 dark:bg-blue-500 rounded-full transition-all duration-300"
                     style={{ width: `${item.score}%` }}
                   />
                 </div>
@@ -301,7 +301,7 @@ function EvaluationFeedbackCard({
         <button
           type="button"
           onClick={onContinue}
-          className="px-6 py-2.5 rounded-xl bg-black text-white hover:bg-gray-900 text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black"
+          className="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           <span>{isLastQuestion ? "Finish & View Full Summary" : "Continue to Next Question"}</span>
           <ArrowRight size={14} />

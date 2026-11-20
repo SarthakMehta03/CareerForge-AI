@@ -17,17 +17,17 @@ function PlatformPreview() {
   const [activeTab, setActiveTab] = useState("interview");
 
   return (
-    <section className="py-16 sm:py-24 bg-white border-b border-gray-100">
+    <section className="py-16 sm:py-24 bg-white dark:bg-[#0c0e14] border-b border-gray-100 dark:border-[#232a3d] transition-colors duration-150">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-xs font-semibold text-gray-800 mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-blue-500/10 text-xs font-semibold text-gray-800 dark:text-blue-400 border border-transparent dark:border-blue-500/20 mb-3">
             <span>Inside the Application</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
             A Closer Look at the CareerForge-AI Interface
           </h2>
-          <p className="mt-3 text-base text-gray-600">
+          <p className="mt-3 text-base text-gray-600 dark:text-gray-400">
             Explore the authentic interfaces designed to help university students
             practice effectively for technical placements.
           </p>
@@ -38,7 +38,7 @@ function PlatformPreview() {
           <div
             role="tablist"
             aria-label="Application Module Previews"
-            className="inline-flex p-1.5 bg-gray-100 rounded-xl max-w-full space-x-1 sm:space-x-2"
+            className="inline-flex p-1.5 bg-gray-100 dark:bg-[#1c2234] rounded-xl max-w-full space-x-1 sm:space-x-2"
           >
             <button
               type="button"
@@ -47,10 +47,10 @@ function PlatformPreview() {
               aria-selected={activeTab === "interview"}
               aria-controls="panel-interview"
               onClick={() => setActiveTab("interview")}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-blue-500 ${
                 activeTab === "interview"
-                  ? "bg-white text-gray-900 shadow-xs"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-gray-900 shadow-xs dark:bg-blue-600 dark:text-white font-semibold"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               <Video size={15} />
@@ -64,10 +64,10 @@ function PlatformPreview() {
               aria-selected={activeTab === "aptitude"}
               aria-controls="panel-aptitude"
               onClick={() => setActiveTab("aptitude")}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-blue-500 ${
                 activeTab === "aptitude"
-                  ? "bg-white text-gray-900 shadow-xs"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-gray-900 shadow-xs dark:bg-blue-600 dark:text-white font-semibold"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               <Brain size={15} />
@@ -81,10 +81,10 @@ function PlatformPreview() {
               aria-selected={activeTab === "resume"}
               aria-controls="panel-resume"
               onClick={() => setActiveTab("resume")}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-blue-500 ${
                 activeTab === "resume"
-                  ? "bg-white text-gray-900 shadow-xs"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-gray-900 shadow-xs dark:bg-blue-600 dark:text-white font-semibold"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               <FileText size={15} />
@@ -98,10 +98,10 @@ function PlatformPreview() {
               aria-selected={activeTab === "dashboard"}
               aria-controls="panel-dashboard"
               onClick={() => setActiveTab("dashboard")}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-blue-500 ${
                 activeTab === "dashboard"
-                  ? "bg-white text-gray-900 shadow-xs"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-gray-900 shadow-xs dark:bg-blue-600 dark:text-white font-semibold"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               <UserCheck size={15} />
@@ -150,7 +150,7 @@ function PlatformPreview() {
                     <Clock size={13} />
                     <span>02:45 remaining</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-black text-white text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-gray-900 dark:bg-blue-500/15 border border-transparent dark:border-blue-500/20 text-white dark:text-blue-400 text-xs font-semibold">
                     <Sparkles size={13} />
                     <span>AI Evaluation</span>
                   </span>
@@ -352,8 +352,8 @@ function PlatformPreview() {
                     </span>
                     <span className="text-xs font-bold text-gray-900">85%</span>
                   </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
-                    <div className="h-full bg-black rounded-full w-[85%]" />
+                  <div className="w-full h-2 bg-gray-100 dark:bg-[#1c2234] rounded-full overflow-hidden mb-3">
+                    <div className="h-full bg-gray-900 dark:bg-blue-500 rounded-full w-[85%]" />
                   </div>
                   <p className="text-xs text-gray-600">
                     Personal, academic records, and career preferences saved.

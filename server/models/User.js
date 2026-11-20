@@ -24,6 +24,14 @@ const userSchema = new mongoose.Schema(
         googleId: {
             type: String,
             default: null,
+            index: true,
+        },
+        accountId: {
+            type: String,
+            unique: true,
+            sparse: true,
+            trim: true,
+            index: true,
         },
         avatar: {
             type: String,
@@ -34,11 +42,42 @@ const userSchema = new mongoose.Schema(
             enum: ['user', 'admin'],
             default: 'user',
         },
+        status: {
+            type: String,
+            enum: ['active', 'suspended'],
+            default: 'active',
+            index: true,
+        },
         resetPasswordToken: {
             type: String,
             default: null,
         },
         resetPasswordExpire: {
+            type: Date,
+            default: null,
+        },
+        loginOtpHash: {
+            type: String,
+            default: null,
+        },
+        loginOtpExpire: {
+            type: Date,
+            default: null,
+        },
+        loginOtpAttempts: {
+            type: Number,
+            default: 0,
+        },
+        loginOtpSessionToken: {
+            type: String,
+            default: null,
+            index: true,
+        },
+        loginOtpLastRequestedAt: {
+            type: Date,
+            default: null,
+        },
+        passwordChangedAt: {
             type: Date,
             default: null,
         },
@@ -121,5 +160,7 @@ const userSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+userSchema.index({ role: 1, status: 1 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -122,17 +122,17 @@ function EducationInfo({ user, onProfileUpdated }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 gap-4">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-7 shadow-sm transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-gray-800 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black">
             <GraduationCap size={19} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Education Information
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Add your university, college, degrees, and academic specializations.
             </p>
           </div>
@@ -142,7 +142,7 @@ function EducationInfo({ user, onProfileUpdated }) {
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition self-start sm:self-auto active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition self-start sm:self-auto active:scale-95 cursor-pointer"
           >
             <Plus size={14} />
             Add Education
@@ -152,15 +152,15 @@ function EducationInfo({ user, onProfileUpdated }) {
 
       {/* Inline Form / Modal for Add or Edit */}
       {isEditing && (
-        <form onSubmit={handleSave} className="my-6 p-5 bg-gray-50/70 border border-gray-200 rounded-xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+        <form onSubmit={handleSave} className="my-6 p-5 bg-gray-50/70 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-750 rounded-xl space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
               {editingIndex !== null ? "Edit Education Entry" : "New Education Entry"}
             </h3>
             <button
               type="button"
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-700 p-1"
+              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -168,7 +168,7 @@ function EducationInfo({ user, onProfileUpdated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Institution Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -178,8 +178,8 @@ function EducationInfo({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="e.g. Stanford University / IIT Delhi"
                 className={`w-full h-9 rounded-lg border ${
-                  errors.institution ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.institution ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.institution && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.institution}</p>
@@ -187,7 +187,7 @@ function EducationInfo({ user, onProfileUpdated }) {
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Degree <span className="text-red-500">*</span>
               </label>
               <input
@@ -197,8 +197,8 @@ function EducationInfo({ user, onProfileUpdated }) {
                 onChange={handleChange}
                 placeholder="e.g. Bachelor of Technology / B.S."
                 className={`w-full h-9 rounded-lg border ${
-                  errors.degree ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-white"
-                } px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400`}
+                  errors.degree ? "border-red-400 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                } px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500`}
               />
               {errors.degree && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.degree}</p>
@@ -208,7 +208,7 @@ function EducationInfo({ user, onProfileUpdated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Field of Study / Branch
               </label>
               <input
@@ -217,12 +217,12 @@ function EducationInfo({ user, onProfileUpdated }) {
                 value={form.fieldOfStudy}
                 onChange={handleChange}
                 placeholder="e.g. Computer Science"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Graduation Year
               </label>
               <input
@@ -231,19 +231,19 @@ function EducationInfo({ user, onProfileUpdated }) {
                 value={form.graduationYear}
                 onChange={handleChange}
                 placeholder="e.g. 2025"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Study Status
               </label>
               <select
                 name="status"
                 value={form.status}
                 onChange={handleChange}
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs text-gray-800 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               >
                 <option value="Completed">Completed</option>
                 <option value="Pursuing">Pursuing / In Progress</option>
@@ -252,7 +252,7 @@ function EducationInfo({ user, onProfileUpdated }) {
             </div>
 
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">
+              <label className="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 CGPA or Percentage
               </label>
               <input
@@ -261,7 +261,7 @@ function EducationInfo({ user, onProfileUpdated }) {
                 value={form.grade}
                 onChange={handleChange}
                 placeholder="e.g. 3.8 / 4.0 or 85%"
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:border-gray-400"
+                className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:border-gray-400 dark:focus:border-gray-500"
               />
             </div>
           </div>
@@ -271,14 +271,14 @@ function EducationInfo({ user, onProfileUpdated }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition"
+              className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               {loading && <Loader2 size={13} className="animate-spin" />}
               {loading ? "Saving..." : "Save Education"}
@@ -290,10 +290,10 @@ function EducationInfo({ user, onProfileUpdated }) {
       {/* List of Education Entries */}
       <div className="mt-5 space-y-3">
         {educationList.length === 0 ? (
-          <div className="text-center py-10 px-4 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-            <BookOpen size={28} className="mx-auto text-gray-400 mb-2" />
-            <h4 className="text-xs font-semibold text-gray-700">No education entries added yet</h4>
-            <p className="text-[11px] text-gray-500 mt-1 max-w-sm mx-auto">
+          <div className="text-center py-10 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-850/40">
+            <BookOpen size={28} className="mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">No education entries added yet</h4>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
               Adding your university or college details boosts your profile completion and provides relevant mock interview questions.
             </p>
           </div>
@@ -301,21 +301,21 @@ function EducationInfo({ user, onProfileUpdated }) {
           educationList.map((item, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+              className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition bg-white dark:bg-gray-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
             >
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="text-sm font-bold text-gray-900">
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                     {item.institution}
                   </h4>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                     {item.status || "Completed"}
                   </span>
                 </div>
-                <p className="text-xs font-medium text-gray-700">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   {item.degree} {item.fieldOfStudy ? `in ${item.fieldOfStudy}` : ""}
                 </p>
-                <div className="flex flex-wrap items-center gap-4 text-[11px] text-gray-500 pt-0.5">
+                <div className="flex flex-wrap items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400 pt-0.5">
                   {item.graduationYear && <span>Class of {item.graduationYear}</span>}
                   {item.grade && <span>Grade: {item.grade}</span>}
                 </div>
@@ -326,7 +326,7 @@ function EducationInfo({ user, onProfileUpdated }) {
                   type="button"
                   onClick={() => handleOpenEdit(idx)}
                   disabled={loading}
-                  className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition"
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
                   title="Edit entry"
                 >
                   <Edit3 size={15} />
@@ -335,7 +335,7 @@ function EducationInfo({ user, onProfileUpdated }) {
                   type="button"
                   onClick={() => handleDelete(idx)}
                   disabled={loading}
-                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                  className="p-2 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition cursor-pointer"
                   title="Remove entry"
                 >
                   <Trash2 size={15} />

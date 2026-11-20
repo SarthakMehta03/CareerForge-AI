@@ -37,17 +37,17 @@ function ValueProposition() {
     <section
       id="value-proposition"
       aria-labelledby="value-prop-heading"
-      className="py-12 sm:py-16 bg-gray-50/70 border-b border-gray-200"
+      className="py-12 sm:py-16 bg-gray-50/70 dark:bg-[#10131d]/70 border-b border-gray-200 dark:border-[#232a3d] transition-colors duration-150"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
           <h2
             id="value-prop-heading"
-            className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900"
+            className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
           >
             Engineered for Placement Success
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">
+          <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             A cohesive environment designed to build core competencies step-by-step
             without distraction.
           </p>
@@ -59,15 +59,15 @@ function ValueProposition() {
             return (
               <div
                 key={index}
-                className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-2xs hover:border-gray-400 transition-colors flex flex-col h-full"
+                className="bg-white dark:bg-[#141824] rounded-xl p-5 sm:p-6 border border-gray-200 dark:border-[#232a3d] shadow-2xs hover:border-gray-400 dark:hover:border-blue-500/40 transition-colors flex flex-col h-full"
               >
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-900 mb-4 shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-blue-500/15 border border-transparent dark:border-blue-500/20 flex items-center justify-center text-gray-900 dark:text-blue-400 mb-4 shrink-0">
                   <Icon size={20} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
                   {item.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mt-auto">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mt-auto">
                   {item.description}
                 </p>
               </div>

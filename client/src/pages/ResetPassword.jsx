@@ -1,34 +1,42 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import Navbar from "../components/auth/Navbar";
 import InputField from "../components/auth/InputField";
 import Button from "../components/auth/Button";
 import PasswordStrength from "../components/auth/PasswordStrength";
 import PasswordMatch from "../components/auth/PasswordMatch";
+import ThemeToggle from "../components/common/ThemeToggle";
+import { BrandLogo } from "../components/common/BrandLogo";
 import { resetPasswordWithToken } from "../services/authService";
 
 function ResetPassword() {
-  const { token } = useParams();
+  const { token: paramToken } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const queryToken = searchParams.get("token") || "";
+  const initialToken = paramToken || queryToken || "";
+
+  const [resetToken, setResetToken] = useState(initialToken);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!password || !confirmPassword) {
-      setError("Please fill in both password fields.");
+    const activeToken = (paramToken || resetToken || "").trim();
+
+    if (!activeToken) {
+      setError("Reset token is missing. Please check your reset link or enter your token.");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
+    if (!password || !confirmPassword) {
+      setError("Please fill in both password fields.");
       return;
     }
 
@@ -39,13 +47,16 @@ function ResetPassword() {
 
     try {
       setLoading(true);
-      const res = await resetPasswordWithToken(token, password);
-      toast.success(res.data.message || "Password reset successfully!");
-      navigate("/login");
+      const res = await resetPasswordWithToken(activeToken, password);
+
+      toast.success(res.data?.message || "Password reset successfully! Please log in.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Failed to reset password. The link may be expired."
+          "Failed to reset password. The link or token may be invalid or expired."
       );
     } finally {
       setLoading(false);
@@ -53,27 +64,56 @@ function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
-      <Navbar />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col justify-between transition-colors duration-150 relative">
+      {/* Top right Theme Toggle for focused layout */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
+        <ThemeToggle />
+      </div>
 
-      <div className="flex justify-center px-4 py-12">
+      <div className="flex-1 flex flex-col justify-center items-center px-4 py-12 sm:py-16">
+        {/* Brand Logo & App Name Header */}
+        <div className="mb-6 sm:mb-8 text-center">
+          <NavLink
+            to="/"
+            className="inline-flex items-center gap-3 group focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white rounded-lg p-1.5 transition-transform hover:scale-[1.02]"
+          >
+            <BrandLogo className="w-10 h-10 sm:w-11 sm:h-11" />
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+              CareerForge-AI
+            </span>
+          </NavLink>
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8"
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8 transition-colors duration-150"
         >
-          <h2 className="text-3xl font-bold text-center text-gray-900">
-            Set New Password
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white tracking-tight">
+            Enter New Password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-500">
-            Create a strong password for your account
+          <p className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Create a strong new password for your account
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            {error && (
-              <div className="rounded-lg bg-red-100 border border-red-300 p-3 text-sm text-red-700">
-                {error}
+          {error && (
+            <div className="mt-6 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-900/60 p-3 text-sm text-red-700 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handlePasswordSubmit} className="mt-6 space-y-4">
+            {!paramToken && !queryToken && (
+              <div>
+                <InputField
+                  name="resetToken"
+                  label="Reset Token"
+                  type="text"
+                  placeholder="Paste your reset token from email"
+                  value={resetToken}
+                  onChange={(e) => setResetToken(e.target.value)}
+                />
               </div>
             )}
 
@@ -94,7 +134,7 @@ function ResetPassword() {
                 name="confirmPassword"
                 label="Confirm New Password"
                 type="password"
-                placeholder="Re-enter new password"
+                placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -106,26 +146,26 @@ function ResetPassword() {
 
             <div className="pt-2">
               <Button
-                text="Reset Password"
+                text="Update Password"
                 type="submit"
                 loading={loading}
               />
             </div>
 
-            <div className="text-center mt-4">
-              <button
-                type="button"
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400 pt-3">
+              Remember your password?{" "}
+              <span
                 onClick={() => navigate("/login")}
-                className="text-xs text-gray-500 hover:text-black hover:underline cursor-pointer"
+                className="font-semibold text-black dark:text-white cursor-pointer hover:underline"
               >
-                Back to Login
-              </button>
-            </div>
+                Log In
+              </span>
+            </p>
           </form>
         </motion.div>
       </div>
 
-      <div className="py-6 text-center text-xs text-gray-400">
+      <div className="py-4 text-center text-xs text-gray-400 dark:text-gray-600">
         © CareerForge-AI. All rights reserved.
       </div>
     </div>

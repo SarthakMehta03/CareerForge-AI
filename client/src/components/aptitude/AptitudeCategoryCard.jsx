@@ -63,7 +63,7 @@ function AptitudeCategoryCard({ category, topicCount, questionCount, accuracy = 
 
         <Link
           to={`/aptitude/test?category=${category.id}`}
-          className="px-3 py-1.5 rounded-lg bg-black text-white hover:bg-gray-900 text-xs font-semibold transition"
+          className="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white font-semibold text-xs transition cursor-pointer shadow-xs"
         >
           Test Category
         </Link>

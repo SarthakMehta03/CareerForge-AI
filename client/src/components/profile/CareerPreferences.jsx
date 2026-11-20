@@ -90,16 +90,16 @@ function CareerPreferences({ user, onProfileUpdated }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-sm">
-      <div className="flex items-center gap-3 pb-5 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-7 shadow-sm transition-colors">
+      <div className="flex items-center gap-3 pb-5 border-b border-gray-100 dark:border-gray-800">
+        <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black">
           <Compass size={19} />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Career Preferences & Goals
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Configure target job roles, preferred work environments, and career direction.
           </p>
         </div>
@@ -109,10 +109,10 @@ function CareerPreferences({ user, onProfileUpdated }) {
         {/* Target Job Role */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium text-gray-700">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
               Target Job Role
             </label>
-            <span className="text-[10px] text-gray-400">Used for AI interview tailoring</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">Used for AI interview tailoring</span>
           </div>
           <input
             type="text"
@@ -120,7 +120,7 @@ function CareerPreferences({ user, onProfileUpdated }) {
             value={formData.targetRole}
             onChange={handleChange}
             placeholder="e.g. Full Stack Developer"
-            className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+            className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
           />
 
           {/* Quick role suggestions */}
@@ -132,8 +132,8 @@ function CareerPreferences({ user, onProfileUpdated }) {
                 onClick={() => handleSelectRole(role)}
                 className={`text-[10px] px-2.5 py-1 rounded-md transition ${
                   formData.targetRole.toLowerCase() === role.toLowerCase()
-                    ? "bg-black text-white font-medium"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-black dark:bg-white text-white dark:text-black font-medium"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
               >
                 {role}
@@ -144,7 +144,7 @@ function CareerPreferences({ user, onProfileUpdated }) {
 
         {/* Preferred Domain */}
         <div>
-          <label className="block mb-1.5 text-xs font-medium text-gray-700">
+          <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
             Preferred Technical Domain / Industry
           </label>
           <input
@@ -153,7 +153,7 @@ function CareerPreferences({ user, onProfileUpdated }) {
             value={formData.preferredDomain}
             onChange={handleChange}
             placeholder="e.g. Web Development / Cloud & DevOps"
-            className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+            className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
           />
           <div className="flex flex-wrap gap-1.5 mt-2">
             {COMMON_DOMAINS.slice(0, 5).map((domain) => (
@@ -163,8 +163,8 @@ function CareerPreferences({ user, onProfileUpdated }) {
                 onClick={() => handleSelectDomain(domain)}
                 className={`text-[10px] px-2.5 py-1 rounded-md transition ${
                   formData.preferredDomain.toLowerCase() === domain.toLowerCase()
-                    ? "bg-black text-white font-medium"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-black dark:bg-white text-white dark:text-black font-medium"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
               >
                 {domain}
@@ -176,14 +176,14 @@ function CareerPreferences({ user, onProfileUpdated }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Experience Level */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Experience Level
             </label>
             <select
               name="experienceLevel"
               value={formData.experienceLevel}
               onChange={handleChange}
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-2.5 text-xs text-gray-800 outline-none transition focus:bg-white focus:border-gray-400"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600"
             >
               <option value="Fresher / Entry-level (0-1 yrs)">Fresher / Entry-level (0-1 yrs)</option>
               <option value="Junior (1-2 yrs)">Junior (1-2 yrs)</option>
@@ -195,14 +195,14 @@ function CareerPreferences({ user, onProfileUpdated }) {
 
           {/* Preferred Employment Type */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Preferred Employment Type
             </label>
             <select
               name="employmentType"
               value={formData.employmentType}
               onChange={handleChange}
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-2.5 text-xs text-gray-800 outline-none transition focus:bg-white focus:border-gray-400"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600"
             >
               <option value="Full-time">Full-time</option>
               <option value="Internship">Internship</option>
@@ -215,7 +215,7 @@ function CareerPreferences({ user, onProfileUpdated }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Target Company */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Target Companies (Optional)
             </label>
             <input
@@ -224,13 +224,13 @@ function CareerPreferences({ user, onProfileUpdated }) {
               value={formData.targetCompany}
               onChange={handleChange}
               placeholder="e.g. Google, Microsoft, Tech Startups"
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
             />
           </div>
 
           {/* Preferred Location */}
           <div>
-            <label className="block mb-1.5 text-xs font-medium text-gray-700">
+            <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
               Preferred Work Location
             </label>
             <input
@@ -239,14 +239,14 @@ function CareerPreferences({ user, onProfileUpdated }) {
               value={formData.preferredLocation}
               onChange={handleChange}
               placeholder="e.g. Remote, Bengaluru, San Francisco"
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
             />
           </div>
         </div>
 
         {/* Target Skills to Learn */}
         <div>
-          <label className="block mb-1.5 text-xs font-medium text-gray-700">
+          <label className="block mb-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
             Skills to Learn or Master Next (Comma-separated)
           </label>
           <input
@@ -255,7 +255,7 @@ function CareerPreferences({ user, onProfileUpdated }) {
             value={formData.targetSkills}
             onChange={handleChange}
             placeholder="e.g. System Design, Kubernetes, GraphQL, Next.js"
-            className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition focus:bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+            className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition focus:bg-white dark:focus:bg-gray-800 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
           />
         </div>
 
@@ -263,7 +263,7 @@ function CareerPreferences({ user, onProfileUpdated }) {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-2 active:scale-95 disabled:opacity-50"
+            className="px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             {loading ? "Saving Preferences..." : "Save Career Preferences"}
